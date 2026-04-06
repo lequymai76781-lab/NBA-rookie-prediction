@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
@@ -12,19 +12,14 @@ from sklearn.metrics.pairwise import cosine_similarity
 import json
 from contextlib import asynccontextmanager
 
-# ====================== 核心修复1：定义BASE_DIR ======================
+# ====================== 1. 基础路径定义 ======================
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
-# ====================== 核心修复2：重写JSONResponse，彻底解决nan序列化问题（100%生效）======================
+# ====================== 2. 彻底解决nan序列化问题的JSON响应类 ======================
 class NanSafeJSONResponse(JSONResponse):
-    """
-    自定义JSON响应：自动把所有nan/inf转成JSON兼容的null
-    替代废弃的app.json_encoder，FastAPI所有版本通用
-    """
     def render(self, content: Any) -> bytes:
         def replace_nan(o):
             if isinstance(o, float):
-                # 把nan、正无穷、负无穷统一转成None（JSON的null）
                 if not np.isfinite(o):
                     return None
             elif isinstance(o, dict):
@@ -36,17 +31,14 @@ class NanSafeJSONResponse(JSONResponse):
             elif isinstance(o, np.floating):
                 return float(o) if np.isfinite(o) else None
             return o
-        # 处理所有nan值
         content_safe = replace_nan(content)
-        # 序列化为JSON
         return json.dumps(
             content_safe,
             ensure_ascii=False,
             separators=(",", ":"),
         ).encode("utf-8")
 
-# ====================== 核心修复3：用lifespan替代弃用的startup事件 ======================
-# 全局资源变量
+# ====================== 3. 全局资源加载（兼容所有FastAPI版本） ======================
 model = None
 le = None
 feature_cols = None
@@ -56,7 +48,6 @@ veteran_df = None
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # 服务启动时：加载所有资源，增加异常捕获
     global model, le, feature_cols, preprocessor, rookie_df, veteran_df
     try:
         print("⏳ 正在加载模型与数据资源...")
@@ -65,7 +56,7 @@ async def lifespan(app: FastAPI):
         le = joblib.load(os.path.join(BASE_DIR, "le.pkl"))
         feature_cols = joblib.load(os.path.join(BASE_DIR, "feature_cols.pkl"))
         preprocessor = joblib.load(os.path.join(BASE_DIR, "preprocessor.pkl"))
-        # 加载数据集，提前处理空值（双重保险）
+        # 加载数据集
         rookie_df = pd.read_csv(os.path.join(BASE_DIR, "current_rookies.csv"))
         veteran_df = pd.read_csv(os.path.join(BASE_DIR, "historical_veterans.csv"))
         # 清理球员名
@@ -75,27 +66,27 @@ async def lifespan(app: FastAPI):
         print(f"❌ 资源加载失败！错误原因：{str(e)}")
         raise e
     yield
-    # 服务关闭时：资源释放
     print("👋 服务已关闭")
 
-# 初始化FastAPI，绑定自定义的安全JSON响应
+# 初始化FastAPI
 app = FastAPI(
     title="NBA新秀生涯潜力预测 API",
     version="1.0",
-    default_response_class=NanSafeJSONResponse,  # 这里替换成我们自定义的响应类
+    default_response_class=NanSafeJSONResponse,
     lifespan=lifespan
 )
 
-#  CORS配置：解决跨域
+# ====================== 4. 终极CORS配置（兼容本地file协议、所有前端地址） ======================
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
     allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
+    max_age=86400,
 )
 
-# ====================== 辅助函数 =====================
+# ====================== 5. 辅助函数（核心修复：解决字典不能用列表当key的报错） =====================
 def clean_search_key(key: str) -> str:
     if not isinstance(key, str):
         return ""
@@ -117,12 +108,16 @@ def calculate_similar_players(rookie_row, top_n=5):
             {"name": "Anthony Davis", "type": "超长巅峰型", "score": 20.8, "career_length": 12, "reb": 10.2, "ast": 2.3,
              "stl": 1.3, "blk": 2.3, "report": "全能内线，1冠，多次最佳阵容。"}
         ]
-    # 普通相似度计算
+    # ====================== 核心修复：把字典转回Series，支持列表批量取列 ======================
+    rookie_series = pd.Series(rookie_row)
+    # 过滤有效特征列
     valid_feature_cols = [col for col in feature_cols if col in veteran_df.columns]
     if not valid_feature_cols:
         return []
-    rookie_features = rookie_row[valid_feature_cols].fillna(0).values.reshape(1, -1)
+    # 提取特征（不会再触发字典key报错）
+    rookie_features = rookie_series[valid_feature_cols].fillna(0).values.reshape(1, -1)
     veteran_features = veteran_df[valid_feature_cols].fillna(0).values
+    # 标准化+相似度计算
     scaler = StandardScaler()
     all_features = np.vstack([rookie_features, veteran_features])
     scaler.fit(all_features)
@@ -130,6 +125,7 @@ def calculate_similar_players(rookie_row, top_n=5):
     veteran_scaled = scaler.transform(veteran_features)
     cos_sim = cosine_similarity(rookie_scaled, veteran_scaled)[0]
     similarity_score = (cos_sim + 1) * 50
+    # 取topN相似球员
     veteran_df_temp = veteran_df.copy()
     veteran_df_temp['similarity'] = similarity_score
     top_veterans = veteran_df_temp.nlargest(top_n, 'similarity')
@@ -148,30 +144,32 @@ def calculate_similar_players(rookie_row, top_n=5):
         })
     return similar
 
-# ====================== 请求模型 ======================
+# ====================== 6. 请求模型 ======================
 class PredictRequest(BaseModel):
     player_name: str
 
-# ====================== API 接口 ======================
+# ====================== 7. API 接口（优化球员名模糊匹配） ======================
 @app.get("/api/rookies")
 async def get_rookies():
     """返回所有新秀列表（前端搜索用）"""
-    # 提前处理空值，双重保险
-    data = rookie_df.to_dict(orient="records")
-    return data
+    return rookie_df.to_dict(orient="records")
 
 @app.get("/api/historical_veterans")
 async def get_historical_veterans():
     """返回历史老将数据（相似度计算用）"""
-    data = veteran_df.to_dict(orient="records")
-    return data
+    return veteran_df.to_dict(orient="records")
 
 @app.post("/api/predict")
 async def predict_career(request: PredictRequest):
     """核心预测接口"""
-    player = rookie_df[rookie_df['player_name'].str.strip() == request.player_name.strip()]
+    input_name = request.player_name.strip()
+    # 模糊匹配：支持中英文、大小写、忽略空格
+    player = rookie_df[
+        rookie_df['player_name'].astype(str).str.strip().str.lower().str.contains(input_name.lower())
+        | rookie_df.get('player_name_cn', '').astype(str).str.strip().str.contains(input_name)
+    ]
     if player.empty:
-        raise HTTPException(status_code=404, detail="未找到该球员")
+        raise HTTPException(status_code=404, detail=f"未找到球员「{input_name}」，请检查球员名是否正确")
     rookie_row = player.iloc[0].to_dict()
     # 1. 模型预测
     X = pd.DataFrame([rookie_row])[feature_cols].fillna(0)
@@ -183,10 +181,10 @@ async def predict_career(request: PredictRequest):
     # 2. 相似球员
     similar_players = calculate_similar_players(rookie_row)
     # 3. 综合潜力评分
-    potential_score = 92 if 'wembanyama' in request.player_name.lower() else \
-        88 if 'banchero' in request.player_name.lower() else \
-            85 if 'holmgren' in request.player_name.lower() else 80
-    # 构造返回结果，所有字段做兜底处理
+    potential_score = 92 if 'wembanyama' in input_name.lower() else \
+        88 if 'banchero' in input_name.lower() else \
+            85 if 'holmgren' in input_name.lower() else 80
+    # 构造返回结果，全字段兜底
     result = {
         "player_name": rookie_row.get("player_name"),
         "player_name_cn": rookie_row.get("player_name_cn", rookie_row.get("player_name")),
@@ -201,7 +199,6 @@ async def predict_career(request: PredictRequest):
         "injury_risk": float(rookie_row.get("伤病风险评分IRS", 50)),
         "similar_players": similar_players,
         "career_length": int(rookie_row.get("生涯长度", 0)),
-        # 新增：处理报错的核心字段，兜底空值
         "early_score_slope": float(rookie_row.get("早期得分斜率", 0))
     }
     return result
@@ -211,5 +208,5 @@ async def predict_career(request: PredictRequest):
 async def health_check():
     return {"status": "ok", "message": "NBA新秀潜力预测 API 运行正常"}
 
-# ====================== 运行 ======================
-# 本地启动命令：uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+# ====================== 启动命令 ======================
+# uvicorn main:app --host 0.0.0.0 --port 8000 --reload
