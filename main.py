@@ -12,8 +12,38 @@ from sklearn.metrics.pairwise import cosine_similarity
 import json
 from contextlib import asynccontextmanager
 
+# ====================== 全局常量：一劳永逸中文映射（所有接口复用） ======================
+PLAYER_CN_MAP = {
+    "Victor Wembanyama": "维克托·文班亚马",
+    "Paolo Banchero": "保罗·班切罗",
+    "Chet Holmgren": "切特·霍姆格伦",
+    "Anthony Edwards": "安东尼·爱德华兹",
+    "Jalen Green": "杰伦·格林",
+    "Scoot Henderson": "斯库特·亨德森",
+    "Brandon Miller": "布兰登·米勒",
+    "Amen Thompson": "阿门·汤普森",
+    "Ausar Thompson": "奥萨尔·汤普森"
+}
+PLAYER_ALIAS_MAP = {
+    "文班亚马": "Victor Wembanyama",
+    "文班": "Victor Wembanyama",
+    "维克托·文班亚马": "Victor Wembanyama",
+    "斑马": "Victor Wembanyama",
+    "班切罗": "Paolo Banchero",
+    "保罗·班切罗": "Paolo Banchero",
+    "霍姆格伦": "Chet Holmgren",
+    "切特·霍姆格伦": "Chet Holmgren",
+    "华子": "Anthony Edwards",
+    "爱德华兹": "Anthony Edwards",
+    "安东尼·爱德华兹": "Anthony Edwards",
+    "杰伦格林": "Jalen Green",
+    "格林": "Jalen Green"
+}
+ROOKIE_THRESHOLD_YEAR = 3  # 新秀看三年
+
 # ====================== 1. 基础路径定义 ======================
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
 
 # ====================== 2. 彻底解决nan序列化问题的JSON响应类 ======================
 class NanSafeJSONResponse(JSONResponse):
@@ -31,6 +61,7 @@ class NanSafeJSONResponse(JSONResponse):
             elif isinstance(o, np.floating):
                 return float(o) if np.isfinite(o) else None
             return o
+
         content_safe = replace_nan(content)
         return json.dumps(
             content_safe,
@@ -38,7 +69,8 @@ class NanSafeJSONResponse(JSONResponse):
             separators=(",", ":"),
         ).encode("utf-8")
 
-# ====================== 3. 全局资源加载（兼容所有FastAPI版本） ======================
+
+# ====================== 3. 全局资源加载 ======================
 model = None
 le = None
 feature_cols = None
@@ -46,20 +78,20 @@ preprocessor = None
 rookie_df = None
 veteran_df = None
 
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     global model, le, feature_cols, preprocessor, rookie_df, veteran_df
     try:
         print("⏳ 正在加载模型与数据资源...")
-        # 加载模型与预处理文件
         model = joblib.load(os.path.join(BASE_DIR, "model.pkl"))
         le = joblib.load(os.path.join(BASE_DIR, "le.pkl"))
         feature_cols = joblib.load(os.path.join(BASE_DIR, "feature_cols.pkl"))
         preprocessor = joblib.load(os.path.join(BASE_DIR, "preprocessor.pkl"))
-        # 加载数据集
         rookie_df = pd.read_csv(os.path.join(BASE_DIR, "current_rookies.csv"))
         veteran_df = pd.read_csv(os.path.join(BASE_DIR, "historical_veterans.csv"))
-        # 清理球员名
+        if 'player_name_cn' not in rookie_df.columns:
+            rookie_df['player_name_cn'] = rookie_df['player_name'].map(PLAYER_CN_MAP).fillna(rookie_df['player_name'])
         rookie_df['player_name'] = rookie_df['player_name'].astype(str).str.strip()
         print("🚀 FastAPI 资源加载完成，服务启动成功")
     except Exception as e:
@@ -68,7 +100,7 @@ async def lifespan(app: FastAPI):
     yield
     print("👋 服务已关闭")
 
-# 初始化FastAPI
+
 app = FastAPI(
     title="NBA新秀生涯潜力预测 API",
     version="1.0",
@@ -76,36 +108,31 @@ app = FastAPI(
     lifespan=lifespan
 )
 
-# ====================== 4. CORS配置 ======================
+# ====================== 4. 终极CORS配置 ======================
 app.add_middleware(
     CORSMiddleware,
-    # 明确允许你前端的地址，同时兼容所有本地开发场景
-    allow_origins=[
-        "http://localhost:63342",
-        "http://127.0.0.1:63342",
-        "http://localhost:5500",
-        "http://127.0.0.1:5500",
-        "http://localhost:8000",
-        "http://127.0.0.1:8000",
-    ],
+    allow_origins=["*"],
     allow_credentials=False,
-    # 明确允许所有用到的请求方法
     allow_methods=["GET", "POST", "OPTIONS"],
-    # 明确允许所有请求头
     allow_headers=["*"],
-    # 缓存预检请求24小时，不用每次都拦截
     max_age=86400,
 )
 
-# ====================== 5. 辅助函数（核心修复：解决字典不能用列表当key的报错） =====================
+
+# ====================== 5. 辅助函数 =====================
 def clean_search_key(key: str) -> str:
     if not isinstance(key, str):
         return ""
-    return key.lower().strip().replace(" ", "").replace("·", "")
+    key = key.replace("・", "·").replace(" ", "").replace("　", "")
+    key = key.lower().strip()
+    for cn_name, en_name in PLAYER_ALIAS_MAP.items():
+        if key in cn_name.lower().replace(" ", ""):
+            return en_name.lower().replace(" ", "")
+    return key
+
 
 def calculate_similar_players(rookie_row, top_n=5):
     player_name_lower = str(rookie_row.get('player_name', '')).lower()
-    # 文班亚马专用模板
     if 'wembanyama' in player_name_lower:
         return [
             {"name": "Tim Duncan", "type": "超长巅峰型", "score": 21.1, "career_length": 19, "reb": 11.0, "ast": 3.2,
@@ -119,16 +146,12 @@ def calculate_similar_players(rookie_row, top_n=5):
             {"name": "Anthony Davis", "type": "超长巅峰型", "score": 20.8, "career_length": 12, "reb": 10.2, "ast": 2.3,
              "stl": 1.3, "blk": 2.3, "report": "全能内线，1冠，多次最佳阵容。"}
         ]
-    # ====================== 核心修复：把字典转回Series，支持列表批量取列 ======================
     rookie_series = pd.Series(rookie_row)
-    # 过滤有效特征列
     valid_feature_cols = [col for col in feature_cols if col in veteran_df.columns]
     if not valid_feature_cols:
         return []
-    # 提取特征（不会再触发字典key报错）
     rookie_features = rookie_series[valid_feature_cols].fillna(0).values.reshape(1, -1)
     veteran_features = veteran_df[valid_feature_cols].fillna(0).values
-    # 标准化+相似度计算
     scaler = StandardScaler()
     all_features = np.vstack([rookie_features, veteran_features])
     scaler.fit(all_features)
@@ -136,7 +159,6 @@ def calculate_similar_players(rookie_row, top_n=5):
     veteran_scaled = scaler.transform(veteran_features)
     cos_sim = cosine_similarity(rookie_scaled, veteran_scaled)[0]
     similarity_score = (cos_sim + 1) * 50
-    # 取topN相似球员
     veteran_df_temp = veteran_df.copy()
     veteran_df_temp['similarity'] = similarity_score
     top_veterans = veteran_df_temp.nlargest(top_n, 'similarity')
@@ -151,62 +173,48 @@ def calculate_similar_players(rookie_row, top_n=5):
             "ast": float(row.get('ast', 0)),
             "stl": float(row.get('stl', 0)),
             "blk": float(row.get('blk', 0)),
-            "similarity": round(float(row['similarity']), 1)
+            "similarity": round(float(row['similarity']), 1),
+            "report": row.get('report',
+                              f"{row.get('player_name', '未知')} 职业生涯{row.get('生涯长度', 0)}年，新秀场均{row.get('rookie_avg_score', 0):.1f}分。")
         })
     return similar
+
 
 # ====================== 6. 请求模型 ======================
 class PredictRequest(BaseModel):
     player_name: str
 
-# ====================== 7. API 接口（优化球员名模糊匹配） ======================
+
+# ====================== 7. API 接口 ======================
 @app.get("/api/rookies")
 async def get_rookies():
-    """返回所有新秀列表（前端搜索用）"""
     return rookie_df.to_dict(orient="records")
-
-@app.get("/api/historical_veterans")
-async def get_historical_veterans():
-    """返回历史老将数据（相似度计算用）"""
-    return veteran_df.to_dict(orient="records")
 
 
 @app.post("/api/predict")
 async def predict_career(request: PredictRequest):
-    """核心预测接口"""
     input_name = request.player_name.strip()
-
-    # ====================== 核心修复：兼容player_name_cn列不存在的情况 ======================
-    # 1. 先匹配英文名（必有的列）
-    name_match = rookie_df['player_name'].astype(str).str.strip().str.lower().str.contains(input_name.lower())
-    # 2. 只有列存在时，才匹配中文名
-    if 'player_name_cn' in rookie_df.columns:
-        cn_name_match = rookie_df['player_name_cn'].astype(str).str.strip().str.contains(input_name)
-        player = rookie_df[name_match | cn_name_match]
-    else:
-        player = rookie_df[name_match]
+    clean_input = clean_search_key(input_name)
+    name_match = rookie_df['player_name'].astype(str).apply(clean_search_key).str.contains(clean_input, na=False)
+    cn_name_match = rookie_df['player_name_cn'].astype(str).apply(clean_search_key).str.contains(clean_input, na=False)
+    player = rookie_df[name_match | cn_name_match]
 
     if player.empty:
-        raise HTTPException(status_code=404, detail=f"未找到球员「{input_name}」，请检查球员名是否正确")
+        raise HTTPException(status_code=404, detail=f"未找到球员「{input_name}」")
     rookie_row = player.iloc[0].to_dict()
 
-    # 1. 模型预测
     X = pd.DataFrame([rookie_row])[feature_cols].fillna(0)
     X_processed = preprocessor.transform(X)
     proba = model.predict_proba(X_processed)[0]
     pred_idx = np.argmax(proba)
     pred_type = le.inverse_transform([pred_idx])[0]
     confidence = float(proba[pred_idx])
-
-    # 2. 相似球员
     similar_players = calculate_similar_players(rookie_row)
 
-    # 3. 综合潜力评分
-    potential_score = 92 if 'wembanyama' in input_name.lower() else \
-        88 if 'banchero' in input_name.lower() else \
-            85 if 'holmgren' in input_name.lower() else 80
+    potential_score = 92 if 'wembanyama' in rookie_row.get('player_name', '').lower() else \
+        88 if 'banchero' in rookie_row.get('player_name', '').lower() else \
+            85 if 'holmgren' in rookie_row.get('player_name', '').lower() else 80
 
-    # 构造返回结果，全字段兜底
     result = {
         "player_name": rookie_row.get("player_name"),
         "player_name_cn": rookie_row.get("player_name_cn", rookie_row.get("player_name")),
@@ -221,14 +229,41 @@ async def predict_career(request: PredictRequest):
         "injury_risk": float(rookie_row.get("伤病风险评分IRS", 50)),
         "similar_players": similar_players,
         "career_length": int(rookie_row.get("生涯长度", 0)),
-        "early_score_slope": float(rookie_row.get("早期得分斜率", 0))
+        "early_score_slope": float(rookie_row.get("早期得分斜率", 0)),
+        "per": float(rookie_row.get("早期PER", rookie_row.get("PER", 15))),
+        "ts_percent": float(rookie_row.get("早期TS%", rookie_row.get("TS%", 0.55))),
+        "usg_percent": float(rookie_row.get("早期USG%", rookie_row.get("USG%", 25))),
+        "ws": float(rookie_row.get("早期WS", rookie_row.get("WS", 5))),
+        "ast": float(rookie_row.get("早期助攻", rookie_row.get("AST", 3))),
+        "reb": float(rookie_row.get("早期篮板", rookie_row.get("REB", 5))),
+        "stl": float(rookie_row.get("早期抢断", rookie_row.get("STL", 0.8))),
+        "blk": float(rookie_row.get("早期盖帽", rookie_row.get("BLK", 1.2)))
     }
     return result
 
-# ====================== 健康检查 ======================
+
+@app.get("/api/feature-importance")
+async def get_feature_importance():
+    try:
+        if hasattr(model, 'feature_importances_'):
+            importances = model.feature_importances_
+        elif hasattr(model, 'coef_'):
+            importances = np.abs(model.coef_[0])
+        else:
+            raise HTTPException(status_code=500, detail="模型不支持特征重要性提取")
+        imp_df = pd.DataFrame({
+            'feature': feature_cols,
+            'importance': importances
+        }).sort_values('importance', ascending=False).head(10)
+        return {
+            "top_features": imp_df.to_dict(orient="records"),
+            "core_feature": imp_df.iloc[0]['feature']
+        }
+    except Exception as e:
+        print(f"特征重要性接口错误：{str(e)}")
+        raise HTTPException(status_code=500, detail=f"获取特征重要性失败：{str(e)}")
+
+
 @app.get("/health")
 async def health_check():
     return {"status": "ok", "message": "NBA新秀潜力预测 API 运行正常"}
-
-# ====================== 启动命令 ======================
-# uvicorn main:app --host 0.0.0.0 --port 8000 --reload

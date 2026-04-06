@@ -4,21 +4,18 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>NBA新秀生涯潜力预测系统</title>
-    <!-- 引入Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- 引入Chart.js（图表渲染） -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
-    <!-- 自定义Tailwind配置 -->
     <script>
         tailwind.config = {
             theme: {
                 extend: {
                     colors: {
-                        primary: '#10b981', // 主色调-翡翠绿
-                        secondary: '#3b82f6', // 辅助色-蓝
-                        danger: '#ef4444', // 危险色-红
-                        warning: '#f59e0b', // 警告色-橙
-                        info: '#8b5cf6', // 信息色-紫
+                        primary: '#10b981',
+                        secondary: '#3b82f6',
+                        danger: '#ef4444',
+                        warning: '#f59e0b',
+                        info: '#8b5cf6',
                         dark: {
                             100: '#1f2937',
                             200: '#111827',
@@ -34,20 +31,13 @@
     </script>
     <style type="text/tailwindcss">
         @layer utilities {
-            .content-auto {
-                content-visibility: auto;
-            }
-            .card-gradient {
-                @apply bg-gradient-to-br from-dark-100 to-dark-200 border border-gray-700 rounded-2xl;
-            }
-            .text-shadow {
-                text-shadow: 0 2px 4px rgba(0,0,0,0.3);
-            }
+            .content-auto { content-visibility: auto; }
+            .card-gradient { @apply bg-gradient-to-br from-dark-100 to-dark-200 border border-gray-700 rounded-2xl; }
+            .text-shadow { text-shadow: 0 2px 4px rgba(0,0,0,0.3); }
         }
     </style>
 </head>
 <body class="min-h-screen bg-dark-300 text-gray-100">
-    <!-- 导航栏 -->
     <nav class="nav-bg sticky top-0 z-50 bg-dark-200/80 backdrop-blur-md border-b border-gray-800">
         <div class="max-w-screen-2xl mx-auto px-8 pt-6 pb-4 flex justify-between items-center">
             <div class="flex items-center gap-3">
@@ -68,7 +58,6 @@
         </div>
     </nav>
 
-    <!-- Hero区域 -->
     <section id="hero" class="max-w-screen-2xl mx-auto px-8 pt-16 pb-20">
         <div class="text-center mb-8">
             <div class="inline-flex items-center gap-2 bg-dark-100 border border-gray-700 rounded-full px-4 py-1 text-sm text-gray-400 mb-6">
@@ -82,8 +71,6 @@
                 复刻 Supabase 极致暗黑美学<br>精准预测每一位新秀的10年巅峰路径
             </p>
         </div>
-
-        <!-- 搜索框 -->
         <div class="max-w-2xl mx-auto mt-12">
             <div class="relative">
                 <input
@@ -92,25 +79,18 @@
                     placeholder="搜索新秀... 文班亚马 / victor / 班切罗"
                     class="w-full bg-dark-100 border border-gray-700 rounded-full px-6 py-4 pl-14 pr-36 text-white focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
                 >
-                <span class="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400">
-                    🔍
-                </span>
-                <button
-                    id="searchBtn"
-                    class="absolute right-2 top-1/2 -translate-y-1/2 bg-white text-black font-medium rounded-full px-6 py-2 hover:bg-gray-200 transition-colors"
-                >
+                <span class="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400">🔍</span>
+                <button id="searchBtn" class="absolute right-2 top-1/2 -translate-y-1/2 bg-white text-black font-medium rounded-full px-6 py-2 hover:bg-gray-200 transition-colors">
                     搜索
                 </button>
             </div>
         </div>
     </section>
 
-    <!-- 加载提示 -->
     <div id="loading" class="hidden max-w-screen-2xl mx-auto px-8 pb-12">
         <p class="text-center text-primary text-lg">正在从后端加载预测结果...</p>
     </div>
 
-    <!-- 核心预测结果 -->
     <section id="predict" class="max-w-screen-2xl mx-auto px-8 pb-16">
         <div class="flex justify-between items-center mb-8">
             <h3 class="text-3xl font-bold text-white">
@@ -120,11 +100,8 @@
                 <option value="">请选择球员</option>
             </select>
         </div>
-
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <!-- 左侧：生涯预测卡片 -->
             <div class="space-y-6">
-                <!-- 生涯类型预测卡片 -->
                 <div id="predTypeCard" class="card-gradient p-8 text-center">
                     <p class="text-gray-400 mb-2">📌 预测生涯类型</p>
                     <h4 id="predType" class="text-[clamp(2rem,5vw,3.5rem)] font-bold text-primary mb-2">--</h4>
@@ -132,8 +109,6 @@
                     <p id="predDesc" class="text-gray-400 mb-4">--</p>
                     <p id="predNote" class="text-sm text-gray-500 bg-dark-300/50 rounded-lg py-2 px-4">--</p>
                 </div>
-
-                <!-- 二级分类 + 潜力评分 -->
                 <div class="grid grid-cols-2 gap-4">
                     <div id="subTypeCard" class="card-gradient p-6 text-center">
                         <p class="text-gray-400 text-sm mb-2">📌 二级分类</p>
@@ -144,14 +119,39 @@
                         <h5 id="potentialScore" class="text-3xl font-bold text-primary">--</h5>
                     </div>
                 </div>
-
-                <!-- 技术定位 -->
                 <div id="positionCard" class="card-gradient p-4">
                     <p class="text-gray-400 text-sm mb-1">💡 当前新秀技术定位</p>
                     <p id="playerPosition" class="text-xl font-medium text-white">--</p>
                 </div>
-
-                <!-- 发展模板参考 -->
+            </div>
+            <div class="space-y-6">
+                <div class="card-gradient p-6">
+                    <h4 class="text-xl font-bold text-white mb-4">📋 历史相似老将参考</h4>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left">
+                            <thead>
+                                <tr class="border-b border-gray-700">
+                                    <th class="pb-3 text-gray-400 font-medium">球员</th>
+                                    <th class="pb-3 text-gray-400 font-medium">生涯类型</th>
+                                    <th class="pb-3 text-gray-400 font-medium">新秀得分</th>
+                                    <th class="pb-3 text-gray-400 font-medium">生涯长度</th>
+                                </tr>
+                            </thead>
+                            <tbody id="similarPlayersTable">
+                                <tr><td colspan="4" class="py-4 text-center text-gray-500">暂无数据</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="mt-6">
+                        <button id="toggleReportBtn" class="w-full flex items-center justify-between bg-dark-300/50 rounded-lg px-4 py-2 text-gray-300 hover:bg-dark-300 transition-colors">
+                            <span>📖 查看相似球员生涯简述</span>
+                            <span id="toggleIcon">▼</span>
+                        </button>
+                        <div id="similarReport" class="hidden mt-4 space-y-3 max-h-60 overflow-y-auto pr-2">
+                            <p class="text-gray-500 text-center">暂无数据</p>
+                        </div>
+                    </div>
+                </div>
                 <div class="card-gradient p-6">
                     <h4 class="text-xl font-bold text-white mb-4">🎯 发展模板参考</h4>
                     <div class="grid grid-cols-2 gap-4">
@@ -166,70 +166,32 @@
                             <p id="floorDesc" class="text-sm text-gray-400 mt-1">--</p>
                         </div>
                     </div>
-                    <p class="text-xs text-gray-500 mt-3">注：上下限基于最相似的5位历史老将的巅峰高度综合评定</p>
-                </div>
-            </div>
-
-            <!-- 右侧：相似老将参考 -->
-            <div class="card-gradient p-6">
-                <h4 class="text-xl font-bold text-white mb-4">📋 历史相似老将参考</h4>
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left">
-                        <thead>
-                            <tr class="border-b border-gray-700">
-                                <th class="pb-3 text-gray-400 font-medium">球员</th>
-                                <th class="pb-3 text-gray-400 font-medium">生涯类型</th>
-                                <th class="pb-3 text-gray-400 font-medium">新秀得分</th>
-                                <th class="pb-3 text-gray-400 font-medium">生涯长度</th>
-                            </tr>
-                        </thead>
-                        <tbody id="similarPlayersTable">
-                            <tr>
-                                <td colspan="4" class="py-4 text-center text-gray-500">暂无数据</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-
-                <!-- 相似球员生涯简述 -->
-                <div class="mt-6">
-                    <button id="toggleReportBtn" class="w-full flex items-center justify-between bg-dark-300/50 rounded-lg px-4 py-2 text-gray-300 hover:bg-dark-300 transition-colors">
-                        <span>📖 查看相似球员生涯简述</span>
-                        <span id="toggleIcon">▼</span>
-                    </button>
-                    <div id="similarReport" class="hidden mt-4 space-y-3 max-h-60 overflow-y-auto pr-2">
-                        <p class="text-gray-500 text-center">暂无数据</p>
-                    </div>
+                    <p class="text-xs text-gray-500 mt-3">注：上下限基于最相似的5位历史老将的巅峰高度综合评定。</p>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- 新秀硬核指标分析 -->
     <section id="metrics" class="max-w-screen-2xl mx-auto px-8 pb-16">
         <h3 class="text-3xl font-bold text-white mb-8">
             <span class="text-primary">📊</span> 新秀硬核指标分析
         </h3>
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <!-- 耐操度 -->
             <div id="durabilityCard" class="card-gradient p-6 text-center">
                 <p class="text-gray-400 mb-2">💪 耐操度（出勤率）</p>
                 <h4 id="durabilityValue" class="text-3xl font-bold text-white mb-1">--</h4>
                 <p id="durabilityDesc" class="text-sm text-gray-400">--</p>
             </div>
-            <!-- 伤病风险 -->
             <div id="injuryCard" class="card-gradient p-6 text-center">
                 <p class="text-gray-400 mb-2">🩹 伤病风险评分</p>
                 <h4 id="injuryValue" class="text-3xl font-bold text-white mb-1">--</h4>
                 <p id="injuryDesc" class="text-sm text-gray-400">--</p>
             </div>
-            <!-- 出勤率 -->
             <div id="attendanceCard" class="card-gradient p-6 text-center">
                 <p class="text-gray-400 mb-2">🗓️ 新秀期平均出勤率</p>
                 <h4 id="attendanceValue" class="text-3xl font-bold text-white mb-1">--</h4>
                 <p id="attendanceDesc" class="text-sm text-gray-400">--</p>
             </div>
-            <!-- 入盟年龄 -->
             <div id="ageCard" class="card-gradient p-6 text-center">
                 <p class="text-gray-400 mb-2">🎂 进入联盟年龄</p>
                 <h4 id="ageValue" class="text-3xl font-bold text-white mb-1">--</h4>
@@ -238,17 +200,14 @@
         </div>
     </section>
 
-    <!-- 雷达图 + 趋势图 -->
     <section class="max-w-screen-2xl mx-auto px-8 pb-16">
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <!-- 雷达图 -->
             <div class="card-gradient p-6">
                 <h4 class="text-xl font-bold text-white mb-6">📈 高阶数据能力雷达图</h4>
                 <div class="aspect-square">
                     <canvas id="radarChart"></canvas>
                 </div>
             </div>
-            <!-- 趋势图 -->
             <div class="card-gradient p-6">
                 <h4 class="text-xl font-bold text-white mb-6">🔮 未来5年得分趋势预测</h4>
                 <div class="aspect-[4/3]">
@@ -258,7 +217,6 @@
         </div>
     </section>
 
-    <!-- 特征重要性 -->
     <section id="featureImportance" class="max-w-screen-2xl mx-auto px-8 pb-16">
         <h3 class="text-3xl font-bold text-white mb-6">
             <span class="text-primary">📝</span> 预测特征重要性
@@ -270,18 +228,17 @@
         </div>
         <div class="card-gradient p-6">
             <h4 class="text-xl font-bold text-white mb-6 text-center">影响生涯预测的Top10特征</h4>
-            <div class="h-[500px]">
+            <div class="h-[500px] w-full">
                 <canvas id="featureChart"></canvas>
             </div>
         </div>
     </section>
 
-    <!-- 完整模板球员表格 -->
     <section id="veterans" class="max-w-screen-2xl mx-auto px-8 pb-16">
         <h3 class="text-3xl font-bold text-white mb-8">
             <span class="text-primary">🔍</span> 最接近的5位历史模板球员
         </h3>
-        <p class="text-gray-400 mb-6">以下是与该新秀最接近的5位历史老将（基于新秀期高阶特征计算），可作为发展参考。</p>
+        <p class="text-gray-400 mb-6">以下是与该新秀最接近的5位历史老将，可作为发展参考。</p>
         <div class="card-gradient p-6 overflow-x-auto">
             <table class="w-full text-left">
                 <thead>
@@ -297,15 +254,12 @@
                     </tr>
                 </thead>
                 <tbody id="fullSimilarTable">
-                    <tr>
-                        <td colspan="8" class="py-6 text-center text-gray-500">暂无数据</td>
-                    </tr>
+                    <tr><td colspan="8" class="py-6 text-center text-gray-500">暂无数据</td></tr>
                 </tbody>
             </table>
         </div>
     </section>
 
-    <!-- 纯文字预测报告 -->
     <section class="max-w-screen-2xl mx-auto px-8 pb-20">
         <h3 class="text-3xl font-bold text-white mb-8">
             <span class="text-primary">📄</span> 球员简要预测报告（纯文字版）
@@ -316,7 +270,6 @@
     </section>
 
     <script>
-        // ====================== 全局配置 ======================
         const API_BASE = "http://127.0.0.1:8000";
         let currentRookies = [];
         let currentPlayer = null;
@@ -324,32 +277,26 @@
         let trendChart = null;
         let featureChart = null;
 
-        // ====================== 页面加载时获取新秀列表 ======================
         window.onload = async () => {
             await fetchRookies();
             await loadFeatureImportance();
-            // 折叠面板事件
             document.getElementById('toggleReportBtn').addEventListener('click', () => {
                 const report = document.getElementById('similarReport');
                 const icon = document.getElementById('toggleIcon');
                 report.classList.toggle('hidden');
                 icon.textContent = report.classList.contains('hidden') ? '▼' : '▲';
             });
-            // 搜索事件
             document.getElementById('searchBtn').addEventListener('click', () => {
                 const keyword = document.getElementById('searchInput').value.trim();
                 if (!keyword) return;
                 fuzzySearchPlayer(keyword);
             });
-            // 下拉选择事件
             document.getElementById('playerSelect').addEventListener('change', (e) => {
                 const playerName = e.target.value;
                 if (playerName) loadPlayerData(playerName);
             });
         };
 
-        // ====================== 基础API请求 ======================
-        // 获取新秀列表
         async function fetchRookies() {
             try {
                 const res = await fetch(`${API_BASE}/api/rookies`);
@@ -362,7 +309,6 @@
             }
         }
 
-        // 填充球员下拉框
         function populatePlayerSelect() {
             const select = document.getElementById('playerSelect');
             select.innerHTML = '<option value="">请选择球员</option>';
@@ -374,13 +320,32 @@
             });
         }
 
-        // 模糊搜索球员
         function fuzzySearchPlayer(keyword) {
-            const lowerKeyword = keyword.toLowerCase().trim();
-            const matched = currentRookies.find(player =>
-                player.player_name.toLowerCase().includes(lowerKeyword)
-                || (player.player_name_cn && player.player_name_cn.includes(keyword))
-            );
+            if (!keyword) return;
+            const PLAYER_ALIAS_MAP = {
+                "文班亚马": "Victor Wembanyama", "文班": "Victor Wembanyama", "斑马": "Victor Wembanyama",
+                "班切罗": "Paolo Banchero", "保罗·班切罗": "Paolo Banchero",
+                "霍姆格伦": "Chet Holmgren", "切特·霍姆格伦": "Chet Holmgren",
+                "华子": "Anthony Edwards", "爱德华兹": "Anthony Edwards",
+                "杰伦格林": "Jalen Green", "格林": "Jalen Green"
+            };
+            const cleanKey = (key) => {
+                if (!key) return "";
+                key = key.replace("・", "·").replace(/\s+/g, "").replace("　", "");
+                key = key.toLowerCase().trim();
+                for (const [cnName, enName] of Object.entries(PLAYER_ALIAS_MAP)) {
+                    if (key.includes(cnName.toLowerCase().replace(/\s+/g, ""))) {
+                        return enName.toLowerCase().replace(/\s+/g, "");
+                    }
+                }
+                return key;
+            };
+            const cleanInput = cleanKey(keyword);
+            const matched = currentRookies.find(player => {
+                const cleanEn = cleanKey(player.player_name);
+                const cleanCn = cleanKey(player.player_name_cn || "");
+                return cleanEn.includes(cleanInput) || cleanCn.includes(cleanInput);
+            });
             if (matched) {
                 document.getElementById('playerSelect').value = matched.player_name;
                 loadPlayerData(matched.player_name);
@@ -389,35 +354,37 @@
             }
         }
 
-        // 加载球员预测数据
         async function loadPlayerData(playerName) {
             if (!playerName) return;
-            document.getElementById('loading').classList.remove('hidden');
+            const loadingDom = document.getElementById('loading');
+            loadingDom.classList.remove('hidden');
             try {
                 const res = await fetch(`${API_BASE}/api/predict`, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ player_name: playerName })
                 });
-                if (!res.ok) throw new Error("球员不存在");
+                if (!res.ok) {
+                    const errText = await res.text();
+                    throw new Error(`后端报错：${res.status} ${errText}`);
+                }
                 const data = await res.json();
+                if (!data || typeof data !== 'object') throw new Error("后端返回空数据");
                 currentPlayer = data;
-                // 渲染所有模块
                 renderPredictionCards(data);
                 renderSimilarPlayers(data.similar_players);
                 renderMetrics(data);
                 renderRadarChart(data);
                 renderTrendChart(data);
                 renderReport(data);
-                document.getElementById('loading').classList.add('hidden');
+                loadingDom.classList.add('hidden');
             } catch (err) {
-                console.error(err);
-                alert("预测失败：" + err.message);
-                document.getElementById('loading').classList.add('hidden');
+                console.error("预测错误：", err);
+                alert(`预测失败：${err.message}`);
+                loadingDom.classList.add('hidden');
             }
         }
 
-        // 加载特征重要性
         async function loadFeatureImportance() {
             try {
                 const res = await fetch(`${API_BASE}/api/feature-importance`);
@@ -426,17 +393,14 @@
                 document.getElementById('coreFeatureTip').textContent = `💡 最核心的特征是：${data.core_feature}`;
                 renderFeatureChart(data.top_features);
             } catch (e) {
-                console.error("获取特征重要性失败", e);
+                console.error("特征重要性加载失败", e);
             }
         }
 
-        // ====================== 渲染函数 ======================
-        // 1. 渲染核心预测卡片
         function renderPredictionCards(data) {
-            // 生涯类型
+            if (!data) return;
             document.getElementById('predType').textContent = data.pred_type;
             document.getElementById('predConfidence').textContent = `置信度: ${(data.confidence * 100).toFixed(1)}%`;
-            // 类型描述
             const typeConfig = {
                 '稳定长青型': { desc: '生涯跨度长、状态稳定', color: 'text-secondary' },
                 '超长巅峰型': { desc: '生涯巅峰超10年，全明星级别', color: 'text-primary' },
@@ -448,19 +412,14 @@
             const config = typeConfig[data.pred_type] || { desc: '未知类型', color: 'text-gray-300' };
             document.getElementById('predType').className = `text-[clamp(2rem,5vw,3.5rem)] font-bold mb-2 ${config.color}`;
             document.getElementById('predDesc').textContent = config.desc;
-            // 备注
             const note = data.career_length < 2
-                ? `注：生涯不足2年，数据样本极少，暂由规则标记为「新秀期」，未来需跟踪发展`
+                ? `注：生涯不足2年，数据样本极少，暂由规则标记为「新秀期」`
                 : `注：基于高阶特征与身体素质综合判定`;
             document.getElementById('predNote').textContent = note;
-            // 二级分类
             document.getElementById('subType').textContent = data.sub_type;
-            // 潜力评分
             document.getElementById('potentialScore').textContent = data.potential_score;
-            // 技术定位
             document.getElementById('playerPosition').textContent = data.player_position;
 
-            // 发展上下限模板
             const similar = data.similar_players;
             if (similar && similar.length >= 2) {
                 const typePriority = {
@@ -481,7 +440,6 @@
             }
         }
 
-        // 2. 渲染相似球员
         function renderSimilarPlayers(players) {
             if (!players || players.length === 0) {
                 document.getElementById('similarPlayersTable').innerHTML = '<tr><td colspan="4" class="py-4 text-center text-gray-500">暂无数据</td></tr>';
@@ -489,7 +447,6 @@
                 document.getElementById('similarReport').innerHTML = '<p class="text-gray-500 text-center">暂无数据</p>';
                 return;
             }
-            // 精简表格
             let tableHtml = '';
             players.forEach(p => {
                 tableHtml += `
@@ -503,7 +460,6 @@
             });
             document.getElementById('similarPlayersTable').innerHTML = tableHtml;
 
-            // 完整表格
             let fullTableHtml = '';
             players.forEach(p => {
                 fullTableHtml += `
@@ -521,7 +477,6 @@
             });
             document.getElementById('fullSimilarTable').innerHTML = fullTableHtml;
 
-            // 生涯简述
             let reportHtml = '';
             players.forEach(p => {
                 reportHtml += `
@@ -534,9 +489,8 @@
             document.getElementById('similarReport').innerHTML = reportHtml;
         }
 
-        // 3. 渲染硬核指标
         function renderMetrics(data) {
-            // 耐操度
+            if (!data) return;
             const durability = data.durability;
             let durColor = '', durDesc = '';
             if (durability >= 80) { durColor = 'text-primary'; durDesc = '健康/高耐操'; }
@@ -546,7 +500,6 @@
             document.getElementById('durabilityValue').className = `text-3xl font-bold mb-1 ${durColor}`;
             document.getElementById('durabilityDesc').textContent = durDesc;
 
-            // 伤病风险
             const injuryRisk = data.injury_risk;
             let injColor = '', injDesc = '';
             if (injuryRisk < 30) { injColor = 'text-primary'; injDesc = '低风险'; }
@@ -556,7 +509,6 @@
             document.getElementById('injuryValue').className = `text-3xl font-bold mb-1 ${injColor}`;
             document.getElementById('injuryDesc').textContent = injDesc;
 
-            // 出勤率
             const attendance = data.durability;
             let attColor = '', attDesc = '';
             if (attendance >= 80) { attColor = 'text-secondary'; attDesc = '高出勤'; }
@@ -566,7 +518,6 @@
             document.getElementById('attendanceValue').className = `text-3xl font-bold mb-1 ${attColor}`;
             document.getElementById('attendanceDesc').textContent = attDesc;
 
-            // 入盟年龄
             const age = data.newbie_age;
             let ageColor = '', ageDesc = '';
             if (age <= 19) { ageColor = 'text-secondary'; ageDesc = '跳级新秀'; }
@@ -577,88 +528,126 @@
             document.getElementById('ageDesc').textContent = ageDesc;
         }
 
-        // 4. 渲染雷达图
         function renderRadarChart(data) {
+            if (!data) return;
             if (radarChart) radarChart.destroy();
-            // 雷达图配置，兜底缺失数据
-            const radarData = {
-                labels: ['PER效率值', '真实命中率', '使用率', '胜利贡献值', '助攻能力', '篮板能力'],
-                datasets: [{
-                    label: data.player_name_cn || data.player_name,
-                    data: [
-                        data.per || 10,
-                        (data.ts_percent || 0.5) * 100,
-                        data.usg_percent || 20,
-                        data.ws || 5,
-                        data.ast || 3,
-                        data.reb || 5
-                    ],
-                    backgroundColor: 'rgba(16, 185, 129, 0.2)',
-                    borderColor: 'rgb(16, 185, 129)',
-                    borderWidth: 3,
-                    pointBackgroundColor: 'rgb(16, 185, 129)',
-                    pointRadius: 4
-                }]
-            };
-            // 暗黑主题配置
+            const nbaRadarConfig = [
+                { key: 'per', label: 'PER效率值', min: 0, max: 35 },
+                { key: 'ts_percent', label: '真实命中率', min: 0.4, max: 0.75 },
+                { key: 'usg_percent', label: '使用率', min: 10, max: 40 },
+                { key: 'ws', label: '胜利贡献值', min: 0, max: 15 },
+                { key: 'ast', label: '助攻能力', min: 0, max: 12 },
+                { key: 'reb', label: '篮板能力', min: 0, max: 18 },
+            ];
+            const labels = [];
+            const normalizedData = [];
+            const rawData = [];
+            nbaRadarConfig.forEach(config => {
+                labels.push(config.label);
+                const rawValue = data[config.key] || ((config.min + config.max) / 2);
+                rawData.push(rawValue);
+                const normalized = ((rawValue - config.min) / (config.max - config.min)) * 100;
+                normalizedData.push(Math.max(0, Math.min(100, normalized)));
+            });
+            normalizedData.push(normalizedData[0]);
+            labels.push(labels[0]);
+
             const ctx = document.getElementById('radarChart').getContext('2d');
             Chart.defaults.color = '#9ca3af';
             Chart.defaults.borderColor = '#374151';
             radarChart = new Chart(ctx, {
                 type: 'radar',
-                data: radarData,
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: data.player_name_cn || data.player_name,
+                        data: normalizedData,
+                        backgroundColor: 'rgba(16, 185, 129, 0.25)',
+                        borderColor: 'rgb(16, 185, 129)',
+                        borderWidth: 3,
+                        pointBackgroundColor: 'rgb(16, 185, 129)',
+                        pointBorderColor: '#fff',
+                        pointRadius: 5,
+                        pointHoverRadius: 7
+                    }]
+                },
                 options: {
                     scales: {
                         r: {
                             beginAtZero: true,
                             max: 100,
-                            ticks: {
-                                stepSize: 20,
-                                backdropColor: 'transparent'
-                            },
-                            grid: {
-                                color: '#374151'
-                            },
-                            angleLines: {
-                                color: '#374151'
-                            }
+                            min: 0,
+                            ticks: { stepSize: 20, backdropColor: 'transparent', color: '#6b7280' },
+                            grid: { color: '#374151', lineWidth: 1 },
+                            angleLines: { color: '#374151', lineWidth: 1 },
+                            pointLabels: { color: '#f3f4f6', font: { size: 12, weight: '500' } }
                         }
                     },
                     plugins: {
-                        legend: {
-                            labels: {
-                                color: '#f3f4f6'
-                            }
+                        legend: { labels: { color: '#f3f4f6', font: { size: 14, weight: 'bold' } } },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const index = context.dataIndex;
+                                    if (index >= rawData.length) return '';
+                                    const config = nbaRadarConfig[index];
+                                    const rawValue = rawData[index].toFixed(1);
+                                    return `${config.label}: ${rawValue}`;
+                                }
+                            },
+                            backgroundColor: '#1f2937',
+                            titleColor: '#fff',
+                            bodyColor: '#f3f4f6',
+                            borderColor: '#10b981',
+                            borderWidth: 1,
+                            padding: 10
                         }
                     }
                 }
             });
         }
 
-        // 5. 渲染得分趋势图
         function renderTrendChart(data) {
+            if (!data) return;
             if (trendChart) trendChart.destroy();
-            // 模拟未来5年得分预测，和原Python逻辑一致
-            const baseScore = data.early_avg_score || 10;
-            const historyScores = [baseScore, baseScore * 1.1, baseScore * 1.15];
-            const futureYears = 5;
-            const futureScores = [];
-            let lastScore = historyScores[historyScores.length - 1];
-            // 增长约束
-            const scoreCap = {
-                "内线蓝领型": 18, "3D角色型": 20, "第六人得分型": 25,
-                "组织控场型": 28, "核心持球型": 32, "未知": 22
-            }[data.player_position] || 22;
-            // 生成未来得分
-            for (let i = 0; i < futureYears; i++) {
-                const growth = Math.min(Math.max(lastScore * 0.02, 0.01), lastScore * 0.06);
-                const newScore = Math.min(lastScore + growth, scoreCap);
-                futureScores.push(newScore);
-                lastScore = newScore;
+            const positionCapMap = {
+                "内线蓝领型": 20, "3D角色型": 22, "第六人得分型": 26,
+                "组织控场型": 28, "核心持球型": 32, "球队基石型": 35,
+                "超长巅峰型": 34, "未知": 24
+            };
+            const scoreCap = positionCapMap[data.player_position] || positionCapMap[data.pred_type] || 24;
+            const baseScore = data.early_avg_score || 12;
+            let historyScores = [];
+            for (let i = 1; i <= 3; i++) {
+                let yearScore = data[`第${i}年得分`] || data[i === 1 ? '新秀赛季得分' : (i === 2 ? '第二年得分' : '第三年得分')];
+                if (!yearScore || isNaN(yearScore)) {
+                    yearScore = i === 1 ? baseScore : (i === 2 ? baseScore * 1.1 : baseScore * 1.15);
+                }
+                historyScores.push(Math.min(yearScore, scoreCap * 0.95));
             }
-            // 图表数据
-            const allScores = [...historyScores, ...futureScores];
-            const allYears = [1, 2, 3, 4, 5, 6, 7, 8];
+
+            const futureYears = 7;
+            const allYears = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+            const allScores = [...historyScores];
+            const peakYear = 6;
+            const a = 0.15;
+            const b = 2 * a * peakYear;
+
+            for (let year = 4; year <= 10; year++) {
+                const relativeGrowth = -a * Math.pow(year - peakYear, 2) + b * (year - peakYear);
+                const base = historyScores[2];
+                let predictedScore = base + (relativeGrowth * 0.8);
+                predictedScore = Math.max(base * 0.8, Math.min(predictedScore, scoreCap));
+                if (year > peakYear + 1) {
+                    predictedScore = predictedScore * (1 - (year - peakYear - 1) * 0.02);
+                }
+                allScores.push(predictedScore);
+            }
+
+            const historyData = [...allScores.slice(0, 3), null, null, null, null, null, null, null];
+            const predictData = [null, null, allScores[2], ...allScores.slice(3)];
+            const capData = Array(10).fill(scoreCap);
+
             const ctx = document.getElementById('trendChart').getContext('2d');
             trendChart = new Chart(ctx, {
                 type: 'line',
@@ -667,71 +656,106 @@
                     datasets: [
                         {
                             label: '历史得分',
-                            data: [...historyScores, null, null, null, null, null],
+                            data: historyData,
                             borderColor: '#3b82f6',
                             backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                            borderWidth: 3,
+                            borderWidth: 4,
                             tension: 0.3,
                             fill: false,
-                            pointRadius: 6
+                            pointRadius: 7,
+                            pointHoverRadius: 9,
+                            pointBackgroundColor: '#3b82f6',
+                            pointBorderColor: '#fff',
+                            pointBorderWidth: 2
                         },
                         {
                             label: '预测得分',
-                            data: [null, null, historyScores[2], ...futureScores],
+                            data: predictData,
                             borderColor: '#f59e0b',
-                            borderDash: [5, 5],
-                            borderWidth: 3,
-                            tension: 0.3,
+                            borderDash: [8, 4],
+                            borderWidth: 4,
+                            tension: 0.4,
                             fill: false,
-                            pointRadius: 6
+                            pointRadius: 7,
+                            pointHoverRadius: 9,
+                            pointBackgroundColor: '#f59e0b',
+                            pointBorderColor: '#fff',
+                            pointBorderWidth: 2
                         },
                         {
                             label: '得分上限',
-                            data: Array(8).fill(scoreCap),
+                            data: capData,
                             borderColor: '#ef4444',
-                            borderDash: [2, 2],
-                            borderWidth: 1,
+                            borderDash: [3, 3],
+                            borderWidth: 2,
                             fill: false,
-                            pointRadius: 0
+                            pointRadius: 0,
+                            pointHoverRadius: 0
                         }
                     ]
                 },
                 options: {
                     responsive: true,
+                    maintainAspectRatio: false,
                     scales: {
                         x: {
-                            title: { display: true, text: '生涯赛季', color: '#f3f4f6' },
-                            grid: { color: '#374151' },
-                            ticks: { color: '#9ca3af' }
+                            title: { display: true, text: '生涯赛季', color: '#f3f4f6', font: { size: 14, weight: 'bold' } },
+                            grid: { color: '#374151', lineWidth: 1 },
+                            ticks: { color: '#9ca3af', font: { size: 12 } }
                         },
                         y: {
-                            title: { display: true, text: '场均得分', color: '#f3f4f6' },
-                            grid: { color: '#374151' },
-                            ticks: { color: '#9ca3af' },
-                            min: Math.max(0, baseScore - 5)
+                            title: { display: true, text: '场均得分', color: '#f3f4f6', font: { size: 14, weight: 'bold' } },
+                            grid: { color: '#374151', lineWidth: 1 },
+                            ticks: { color: '#9ca3af', font: { size: 12 } },
+                            min: Math.max(0, Math.min(...allScores) - 5),
+                            max: scoreCap + 3
                         }
                     },
                     plugins: {
                         title: {
                             display: true,
-                            text: `${data.player_name_cn || data.player_name} 生涯得分趋势预测`,
+                            text: `${data.player_name_cn || data.player_name} 生涯得分趋势预测（10年）`,
                             color: '#f3f4f6',
-                            font: { size: 14 }
+                            font: { size: 16, weight: 'bold' }
                         },
                         legend: {
-                            labels: { color: '#f3f4f6' }
+                            labels: {
+                                color: '#f3f4f6',
+                                font: { size: 13, weight: '500' },
+                                padding: 15
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: '#1f2937',
+                            titleColor: '#fff',
+                            bodyColor: '#f3f4f6',
+                            borderColor: '#10b981',
+                            borderWidth: 1,
+                            padding: 10,
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.dataset.label || '';
+                                    const value = context.parsed.y;
+                                    if (value === null) return '';
+                                    return `${label}: ${value.toFixed(1)}分`;
+                                }
+                            }
                         }
                     }
                 }
             });
         }
 
-        // 6. 渲染特征重要性图
         function renderFeatureChart(features) {
+            if (!features || features.length === 0) return;
             if (featureChart) featureChart.destroy();
             const ctx = document.getElementById('featureChart').getContext('2d');
-            // 反转数组，让重要性最高的在最上面
             const reversedFeatures = [...features].reverse();
+            const colors = [
+                '#10b981', '#059669', '#047857', '#065f46', '#064e3b',
+                '#1e40af', '#1e3a8a', '#1e3a8a', '#312e81', '#4c1d95'
+            ].reverse();
+
             featureChart = new Chart(ctx, {
                 type: 'bar',
                 data: {
@@ -739,11 +763,9 @@
                     datasets: [{
                         label: '特征重要性',
                         data: reversedFeatures.map(f => f.importance),
-                        backgroundColor: [
-                            '#10b981', '#059669', '#047857', '#065f46', '#064e3b',
-                            '#1e40af', '#1e3a8a', '#1e3a8a', '#312e81', '#4c1d95'
-                        ].reverse(),
-                        borderRadius: 4
+                        backgroundColor: colors,
+                        borderRadius: 4,
+                        barThickness: 30
                     }]
                 },
                 options: {
@@ -753,24 +775,20 @@
                     scales: {
                         x: {
                             grid: { color: '#374151' },
-                            ticks: { color: '#9ca3af' }
+                            ticks: { color: '#9ca3af', font: { size: 12 } }
                         },
                         y: {
                             grid: { display: false },
-                            ticks: { color: '#f3f4f6', font: { size: 12 } }
+                            ticks: { color: '#f3f4f6', font: { size: 13 } }
                         }
                     },
-                    plugins: {
-                        legend: {
-                            display: false
-                        }
-                    }
+                    plugins: { legend: { display: false } }
                 }
             });
         }
 
-        // 7. 渲染纯文字报告
         function renderReport(data) {
+            if (!data) return;
             const report = `
             <div class="mb-6">
                 <h4 class="text-2xl font-bold text-white mb-4">🏀 ${data.player_name_cn || data.player_name}（${data.player_name}）生涯潜力预测报告</h4>
@@ -808,9 +826,9 @@
                         </ul>
                     </div>
                 </div>
-                ${data.career_length < 4 ? `
+                ${data.career_length < 3 ? `
                 <div class="mt-6 p-4 bg-warning/10 border border-warning/30 rounded-lg">
-                    <p class="text-warning">⚠️ 特别说明：该球员目前生涯不足4年，数据样本有限，预测结果仅供参考，未来需持续跟踪发展。</p>
+                    <p class="text-warning">⚠️ 特别说明：该球员目前生涯不足3年，数据样本有限，预测结果仅供参考，未来需持续跟踪发展。</p>
                 </div>
                 ` : ''}
                 <div class="mt-8 pt-4 border-t border-gray-700 text-sm text-gray-500 text-center">
