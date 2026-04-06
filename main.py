@@ -1,5 +1,6 @@
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 import pandas as pd
 import numpy as np
@@ -8,23 +9,39 @@ import os
 from typing import List, Dict, Optional
 from sklearn.preprocessing import StandardScaler
 from sklearn.metrics.pairwise import cosine_similarity
+import json
 
-app = FastAPI(title="NBA新秀生涯潜力预测 API", version="1.0")
+#  自定义JSON编码器：自动把所有nan/inf转成JSON兼容的null，彻底解决序列化错误
+class CustomJSONEncoder(json.JSONEncoder):
+    def encode(self, obj):
+        def replace_nan(o):
+            if isinstance(o, float):
+                # 把nan/无穷大统一转成None（JSON的null）
+                if not (float('-inf') < o < float('inf')):
+                    return None
+            elif isinstance(o, dict):
+                return {k: replace_nan(v) for k, v in o.items()}
+            elif isinstance(o, list):
+                return [replace_nan(i) for i in o]
+            return o
+        return super().encode(replace_nan(obj))
 
-# ====================== CORS（支持 GitHub Pages 前端）======================
+#  初始化FastAPI，绑定自定义编码器
+app = FastAPI(
+    title="NBA新秀生涯潜力预测 API",
+    version="1.0",
+    default_response_class=JSONResponse
+)
+app.json_encoder = CustomJSONEncoder
+
+#  正确的CORS配置：解决跨域，彻底消除浏览器拦截
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:8001",  # 本地前端地址
-        "https://lequymai76781-lab.github.io",  # 你的GitHub Pages
-        "https://wuhw.fun"  # 你买的自定义域名
-    ],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_origins=["*"],  # 允许所有本地/线上源
+    allow_credentials=False,  #  必须设为False！和["*"]完全兼容，解决互斥问题
+    allow_methods=["*"],  # 允许所有请求方法
+    allow_headers=["*"],  # 允许所有请求头
 )
-
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 # ====================== 全局加载 ======================
 model = None
@@ -52,7 +69,7 @@ async def load_all_resources():
     print("🚀 FastAPI 资源加载完成")
 
 
-# ====================== 辅助函数（直接复制自你的 Streamlit）=====================
+# ====================== 辅助函数 =====================
 def clean_search_key(key: str) -> str:
     if not isinstance(key, str):
         return ""
