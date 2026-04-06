@@ -170,18 +170,26 @@ async def get_historical_veterans():
     """返回历史老将数据（相似度计算用）"""
     return veteran_df.to_dict(orient="records")
 
+
 @app.post("/api/predict")
 async def predict_career(request: PredictRequest):
     """核心预测接口"""
     input_name = request.player_name.strip()
-    # 模糊匹配：支持中英文、大小写、忽略空格
-    player = rookie_df[
-        rookie_df['player_name'].astype(str).str.strip().str.lower().str.contains(input_name.lower())
-        | rookie_df.get('player_name_cn', '').astype(str).str.strip().str.contains(input_name)
-    ]
+
+    # ====================== 核心修复：兼容player_name_cn列不存在的情况 ======================
+    # 1. 先匹配英文名（必有的列）
+    name_match = rookie_df['player_name'].astype(str).str.strip().str.lower().str.contains(input_name.lower())
+    # 2. 只有列存在时，才匹配中文名
+    if 'player_name_cn' in rookie_df.columns:
+        cn_name_match = rookie_df['player_name_cn'].astype(str).str.strip().str.contains(input_name)
+        player = rookie_df[name_match | cn_name_match]
+    else:
+        player = rookie_df[name_match]
+
     if player.empty:
         raise HTTPException(status_code=404, detail=f"未找到球员「{input_name}」，请检查球员名是否正确")
     rookie_row = player.iloc[0].to_dict()
+
     # 1. 模型预测
     X = pd.DataFrame([rookie_row])[feature_cols].fillna(0)
     X_processed = preprocessor.transform(X)
@@ -189,12 +197,15 @@ async def predict_career(request: PredictRequest):
     pred_idx = np.argmax(proba)
     pred_type = le.inverse_transform([pred_idx])[0]
     confidence = float(proba[pred_idx])
+
     # 2. 相似球员
     similar_players = calculate_similar_players(rookie_row)
+
     # 3. 综合潜力评分
     potential_score = 92 if 'wembanyama' in input_name.lower() else \
         88 if 'banchero' in input_name.lower() else \
             85 if 'holmgren' in input_name.lower() else 80
+
     # 构造返回结果，全字段兜底
     result = {
         "player_name": rookie_row.get("player_name"),
