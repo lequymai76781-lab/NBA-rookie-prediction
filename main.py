@@ -76,21 +76,26 @@ app = FastAPI(
     lifespan=lifespan
 )
 
-# ====================== 4. CORS配置（兼容本地file协议、所有前端地址） ======================
-# 终极CORS配置：彻底解决所有本地跨域问题，兼容PyCharm、Live Server所有场景
+# ====================== 4. CORS配置 ======================
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # 允许所有源
+    # 明确允许你前端的地址，同时兼容所有本地开发场景
+    allow_origins=[
+        "http://localhost:63342",
+        "http://127.0.0.1:63342",
+        "http://localhost:5500",
+        "http://127.0.0.1:5500",
+        "http://localhost:8000",
+        "http://127.0.0.1:8000",
+    ],
     allow_credentials=False,
-    allow_methods=["*"],  # 允许所有请求方法（GET/POST/OPTIONS等）
-    allow_headers=["*"],  # 允许所有请求头
-    max_age=86400,  # 缓存预检请求结果24小时，避免重复拦截
+    # 明确允许所有用到的请求方法
+    allow_methods=["GET", "POST", "OPTIONS"],
+    # 明确允许所有请求头
+    allow_headers=["*"],
+    # 缓存预检请求24小时，不用每次都拦截
+    max_age=86400,
 )
-
-# 兜底处理：强制所有OPTIONS预检请求返回200，解决浏览器预检拦截
-@app.options("/{path:path}")
-async def options_handler(path: str):
-    return JSONResponse(status_code=200, content={})
 
 # ====================== 5. 辅助函数（核心修复：解决字典不能用列表当key的报错） =====================
 def clean_search_key(key: str) -> str:
