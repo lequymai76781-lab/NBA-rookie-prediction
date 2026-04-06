@@ -14,7 +14,11 @@ app = FastAPI(title="NBA新秀生涯潜力预测 API", version="1.0")
 # ====================== CORS（支持 GitHub Pages 前端）======================
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # 生产环境建议改成你前端域名
+    allow_origins=[
+        "http://localhost:8001",  # 本地前端地址
+        "https://lequymai76781-lab.github.io",  # 你的GitHub Pages
+        "https://wuhw.fun"  # 你买的自定义域名
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
