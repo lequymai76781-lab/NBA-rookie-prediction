@@ -119,16 +119,15 @@ async def root():
         raise HTTPException(status_code=404, detail="前端页面index.html不存在，请确保文件和main.py在同一文件夹")
     return FileResponse(INDEX_HTML_PATH)
 
-# ====================== CORS跨域配置（核心修复！前后端连不上90%是这里的问题） ======================
+# ====================== CORS跨域配置 ======================
 app.add_middleware(
     CORSMiddleware,
-    # 允许你的线上网站域名 + 本地测试地址，按需添加即可
     allow_origins=[
-        "https://rookihe.top",  # 你的线上网站域名
-        "http://localhost:8000",
-        "http://127.0.0.1:8000"
+        "https://1d5fa9ef-96f2-4f2d-ba65-13bde9f8bb73-00-qrkqiw6y6k4y.pike.replit.dev",
+        "http://localhost:5000",
+        "http://127.0.0.1:5000"
     ],
-    allow_credentials=True,  # 关键：必须开启，匹配前端请求配置
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
     max_age=86400,
@@ -281,5 +280,5 @@ async def get_feature_importance():
 async def health_check():
     return {"status": "ok", "message": "NBA新秀潜力预测 API 运行正常"}
 
-# ====================== 启动命令 ======================
-# uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+# host必须是0.0.0.0，不然外网访问不到
+uvicorn main:app --host 0.0.0.0 --port 5000 --reload
