@@ -295,6 +295,10 @@
                 const playerName = e.target.value;
                 if (playerName) loadPlayerData(playerName);
             });
+            // 回车搜索
+            document.getElementById('searchInput').addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') document.getElementById('searchBtn').click();
+            });
         };
 
         async function fetchRookies() {
@@ -416,9 +420,9 @@
                 ? `注：生涯不足2年，数据样本极少，暂由规则标记为「新秀期」`
                 : `注：基于高阶特征与身体素质综合判定`;
             document.getElementById('predNote').textContent = note;
-            document.getElementById('subType').textContent = data.sub_type;
-            document.getElementById('potentialScore').textContent = data.potential_score;
-            document.getElementById('playerPosition').textContent = data.player_position;
+            document.getElementById('subType').textContent = data.sub_type || '未分类';
+            document.getElementById('potentialScore').textContent = (data.potential_score || 0).toFixed(1);
+            document.getElementById('playerPosition').textContent = data.player_position || '未知定位';
 
             const similar = data.similar_players;
             if (similar && similar.length >= 2) {
@@ -437,6 +441,11 @@
                 document.getElementById('ceilingDesc').textContent = `新秀场均${ceiling.score.toFixed(1)}分，生涯${ceiling.career_length}年`;
                 document.getElementById('floorPlayer').textContent = `${floor.name}（${floor.type}）`;
                 document.getElementById('floorDesc').textContent = `新秀场均${floor.score.toFixed(1)}分，生涯${floor.career_length}年`;
+            } else {
+                document.getElementById('ceilingPlayer').textContent = '--';
+                document.getElementById('ceilingDesc').textContent = '--';
+                document.getElementById('floorPlayer').textContent = '--';
+                document.getElementById('floorDesc').textContent = '--';
             }
         }
 
@@ -467,10 +476,10 @@
                     <td class="py-3 font-medium">${p.name}</td>
                     <td class="py-3 text-primary">${p.type}</td>
                     <td class="py-3">${p.score.toFixed(1)}</td>
-                    <td class="py-3">${p.reb.toFixed(1)}</td>
-                    <td class="py-3">${p.ast.toFixed(1)}</td>
-                    <td class="py-3">${p.stl.toFixed(1)}</td>
-                    <td class="py-3">${p.blk.toFixed(1)}</td>
+                    <td class="py-3">${p.reb ? p.reb.toFixed(1) : '--'}</td>
+                    <td class="py-3">${p.ast ? p.ast.toFixed(1) : '--'}</td>
+                    <td class="py-3">${p.stl ? p.stl.toFixed(1) : '--'}</td>
+                    <td class="py-3">${p.blk ? p.blk.toFixed(1) : '--'}</td>
                     <td class="py-3">${p.career_length}年</td>
                 </tr>
                 `;
@@ -491,7 +500,8 @@
 
         function renderMetrics(data) {
             if (!data) return;
-            const durability = data.durability;
+            // 耐操度
+            const durability = data.durability || 0;
             let durColor = '', durDesc = '';
             if (durability >= 80) { durColor = 'text-primary'; durDesc = '健康/高耐操'; }
             else if (durability >= 60) { durColor = 'text-warning'; durDesc = '中等耐操'; }
@@ -500,7 +510,8 @@
             document.getElementById('durabilityValue').className = `text-3xl font-bold mb-1 ${durColor}`;
             document.getElementById('durabilityDesc').textContent = durDesc;
 
-            const injuryRisk = data.injury_risk;
+            // 伤病风险
+            const injuryRisk = data.injury_risk || 0;
             let injColor = '', injDesc = '';
             if (injuryRisk < 30) { injColor = 'text-primary'; injDesc = '低风险'; }
             else if (injuryRisk < 60) { injColor = 'text-warning'; injDesc = '中风险'; }
@@ -509,7 +520,8 @@
             document.getElementById('injuryValue').className = `text-3xl font-bold mb-1 ${injColor}`;
             document.getElementById('injuryDesc').textContent = injDesc;
 
-            const attendance = data.durability;
+            // 出勤率
+            const attendance = data.durability || 0;
             let attColor = '', attDesc = '';
             if (attendance >= 80) { attColor = 'text-secondary'; attDesc = '高出勤'; }
             else if (attendance >= 60) { attColor = 'text-gray-300'; attDesc = '中等出勤'; }
@@ -518,7 +530,8 @@
             document.getElementById('attendanceValue').className = `text-3xl font-bold mb-1 ${attColor}`;
             document.getElementById('attendanceDesc').textContent = attDesc;
 
-            const age = data.newbie_age;
+            // 进入联盟年龄
+            const age = data.newbie_age || 0;
             let ageColor = '', ageDesc = '';
             if (age <= 19) { ageColor = 'text-secondary'; ageDesc = '跳级新秀'; }
             else if (age >= 22) { ageColor = 'text-info'; ageDesc = '超龄新秀'; }
@@ -549,6 +562,7 @@
                 const normalized = ((rawValue - config.min) / (config.max - config.min)) * 100;
                 normalizedData.push(Math.max(0, Math.min(100, normalized)));
             });
+            // 闭合雷达图
             normalizedData.push(normalizedData[0]);
             labels.push(labels[0]);
 
@@ -602,7 +616,8 @@
                             borderWidth: 1,
                             padding: 10
                         }
-                    }
+                    },
+                    maintainAspectRatio: true
                 }
             });
         }
@@ -613,10 +628,13 @@
             const positionCapMap = {
                 "内线蓝领型": 20, "3D角色型": 22, "第六人得分型": 26,
                 "组织控场型": 28, "核心持球型": 32, "球队基石型": 35,
-                "超长巅峰型": 34, "未知": 24
+                "超长巅峰型": 34, "稳定长青型": 30, "大器晚成型": 28,
+                "生涯波动型": 26, "早衰型": 24, "新秀期": 22, "未知": 24
             };
             const scoreCap = positionCapMap[data.player_position] || positionCapMap[data.pred_type] || 24;
             const baseScore = data.early_avg_score || 12;
+
+            // 历史得分（前3年）
             let historyScores = [];
             for (let i = 1; i <= 3; i++) {
                 let yearScore = data[`第${i}年得分`] || data[i === 1 ? '新秀赛季得分' : (i === 2 ? '第二年得分' : '第三年得分')];
@@ -626,24 +644,28 @@
                 historyScores.push(Math.min(yearScore, scoreCap * 0.95));
             }
 
+            // 预测未来7年得分
             const futureYears = 7;
             const allYears = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
             const allScores = [...historyScores];
-            const peakYear = 6;
-            const a = 0.15;
+            const peakYear = 6; // 巅峰期在第6年
+            const a = 0.15; // 抛物线系数
             const b = 2 * a * peakYear;
 
             for (let year = 4; year <= 10; year++) {
                 const relativeGrowth = -a * Math.pow(year - peakYear, 2) + b * (year - peakYear);
                 const base = historyScores[2];
                 let predictedScore = base + (relativeGrowth * 0.8);
+                // 限制上下限
                 predictedScore = Math.max(base * 0.8, Math.min(predictedScore, scoreCap));
+                // 巅峰后逐年下滑
                 if (year > peakYear + 1) {
                     predictedScore = predictedScore * (1 - (year - peakYear - 1) * 0.02);
                 }
                 allScores.push(predictedScore);
             }
 
+            // 拆分历史和预测数据（实现断点连接）
             const historyData = [...allScores.slice(0, 3), null, null, null, null, null, null, null];
             const predictData = [null, null, allScores[2], ...allScores.slice(3)];
             const capData = Array(10).fill(scoreCap);
@@ -688,6 +710,7 @@
                             borderColor: '#ef4444',
                             borderDash: [3, 3],
                             borderWidth: 2,
+                            tension: 0,
                             fill: false,
                             pointRadius: 0,
                             pointHoverRadius: 0
@@ -695,36 +718,120 @@
                     ]
                 },
                 options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
                     scales: {
-                        x: {
-                            title: { display: true, text: '生涯赛季', color: '#f3f4f6', font: { size: 14, weight: 'bold' } },
-                            grid: { color: '#374151', lineWidth: 1 },
-                            ticks: { color: '#9ca3af', font: { size: 12 } }
-                        },
                         y: {
-                            title: { display: true, text: '场均得分', color: '#f3f4f6', font: { size: 14, weight: 'bold' } },
-                            grid: { color: '#374151', lineWidth: 1 },
-                            ticks: { color: '#9ca3af', font: { size: 12 } },
+                            beginAtZero: false,
                             min: Math.max(0, Math.min(...allScores) - 5),
-                            max: scoreCap + 3
+                            max: Math.max(scoreCap + 5, Math.max(...allScores) + 5),
+                            ticks: { color: '#9ca3af', font: { size: 12 } },
+                            grid: { color: '#374151', lineWidth: 1 },
+                            border: { color: '#4b5563' }
+                        },
+                        x: {
+                            ticks: { color: '#9ca3af', font: { size: 12 } },
+                            grid: { display: false },
+                            border: { color: '#4b5563' },
+                            title: { display: true, text: '生涯年份', color: '#d1d5db' }
                         }
                     },
                     plugins: {
-                        title: {
-                            display: true,
-                            text: `${data.player_name_cn || data.player_name} 生涯得分趋势预测（10年）`,
-                            color: '#f3f4f6',
-                            font: { size: 16, weight: 'bold' }
-                        },
                         legend: {
+                            position: 'top',
                             labels: {
                                 color: '#f3f4f6',
-                                font: { size: 13, weight: '500' },
-                                padding: 15
+                                font: { size: 14, weight: '500' },
+                                padding: 20
                             }
                         },
+                        tooltip: {
+                            backgroundColor: '#1f2937',
+                            titleColor: '#fff',
+                            bodyColor: '#f3f4f6',
+                            borderColor: '#f59e0b',
+                            borderWidth: 1,
+                            padding: 12,
+                            cornerRadius: 8,
+                            callbacks: {
+                                label: function(context) {
+                                    const value = context.raw;
+                                    if (value === null) return '';
+                                    return `${context.dataset.label}: ${value.toFixed(1)} 分`;
+                                }
+                            }
+                        },
+                        annotation: {
+                            annotations: {
+                                peakLine: {
+                                    type: 'line',
+                                    xMin: peakYear,
+                                    xMax: peakYear,
+                                    borderColor: '#8b5cf6',
+                                    borderWidth: 2,
+                                    borderDash: [2, 2],
+                                    label: {
+                                        content: '预测巅峰',
+                                        display: true,
+                                        position: 'start',
+                                        color: '#8b5cf6'
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    maintainAspectRatio: true,
+                    interaction: {
+                        intersect: false,
+                        mode: 'index'
+                    }
+                }
+            });
+        }
+
+        function renderFeatureChart(topFeatures) {
+            if (!topFeatures || topFeatures.length === 0) return;
+            if (featureChart) featureChart.destroy();
+
+            const ctx = document.getElementById('featureChart').getContext('2d');
+            // 反转数据让重要性最高的在顶部
+            const reversed = [...topFeatures].reverse();
+            const labels = reversed.map(item => item.name);
+            const values = reversed.map(item => item.importance);
+
+            featureChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: '特征重要性',
+                        data: values,
+                        backgroundColor: function(context) {
+                            const value = context.raw;
+                            const alpha = Math.min(1, 0.4 + (value / Math.max(...values)) * 0.6);
+                            return `rgba(16, 185, 129, ${alpha})`;
+                        },
+                        borderColor: 'rgb(16, 185, 129)',
+                        borderWidth: 2,
+                        borderRadius: 8,
+                        borderSkipped: false
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            ticks: { color: '#9ca3af', font: { size: 12 } },
+                            grid: { color: '#374151', lineWidth: 1 },
+                            border: { color: '#4b5563' }
+                        },
+                        y: {
+                            ticks: { color: '#f3f4f6', font: { size: 13, weight: '500' } },
+                            grid: { display: false },
+                            border: { color: '#4b5563' }
+                        }
+                    },
+                    plugins: {
+                        legend: { display: false },
                         tooltip: {
                             backgroundColor: '#1f2937',
                             titleColor: '#fff',
@@ -734,108 +841,61 @@
                             padding: 10,
                             callbacks: {
                                 label: function(context) {
-                                    const label = context.dataset.label || '';
-                                    const value = context.parsed.y;
-                                    if (value === null) return '';
-                                    return `${label}: ${value.toFixed(1)}分`;
+                                    return `重要性: ${context.raw.toFixed(4)}`;
                                 }
                             }
                         }
+                    },
+                    maintainAspectRatio: false,
+                    animation: {
+                        duration: 1000,
+                        easing: 'easeOutQuart'
                     }
                 }
             });
         }
 
-        function renderFeatureChart(features) {
-            if (!features || features.length === 0) return;
-            if (featureChart) featureChart.destroy();
-            const ctx = document.getElementById('featureChart').getContext('2d');
-            const reversedFeatures = [...features].reverse();
-            const colors = [
-                '#10b981', '#059669', '#047857', '#065f46', '#064e3b',
-                '#1e40af', '#1e3a8a', '#1e3a8a', '#312e81', '#4c1d95'
-            ].reverse();
-
-            featureChart = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: reversedFeatures.map(f => f.feature),
-                    datasets: [{
-                        label: '特征重要性',
-                        data: reversedFeatures.map(f => f.importance),
-                        backgroundColor: colors,
-                        borderRadius: 4,
-                        barThickness: 30
-                    }]
-                },
-                options: {
-                    indexAxis: 'y',
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        x: {
-                            grid: { color: '#374151' },
-                            ticks: { color: '#9ca3af', font: { size: 12 } }
-                        },
-                        y: {
-                            grid: { display: false },
-                            ticks: { color: '#f3f4f6', font: { size: 13 } }
-                        }
-                    },
-                    plugins: { legend: { display: false } }
-                }
-            });
-        }
-
         function renderReport(data) {
-            if (!data) return;
+            if (!data) {
+                document.getElementById('fullReport').innerHTML = '<p class="text-center text-gray-500">暂无预测报告</p>';
+                return;
+            }
+
+            const playerName = data.player_name_cn || data.player_name;
+            const predType = data.pred_type;
+            const confidence = (data.confidence * 100).toFixed(1);
+            const potentialScore = (data.potential_score || 0).toFixed(1);
+            const position = data.player_position || '未知定位';
+            const durability = (data.durability || 0).toFixed(1);
+            const injuryRisk = (data.injury_risk || 0).toFixed(1);
+            const age = data.newbie_age || 0;
+
+            // 相似球员摘要
+            let similarSummary = '暂无相似历史球员参考。';
+            if (data.similar_players && data.similar_players.length > 0) {
+                const top3 = data.similar_players.slice(0, 3);
+                similarSummary = `最相似的3位历史球员为：${top3.map(p => `${p.name}（${p.type}，生涯${p.career_length}年）`).join('、')}。`;
+            }
+
             const report = `
-            <div class="mb-6">
-                <h4 class="text-2xl font-bold text-white mb-4">🏀 ${data.player_name_cn || data.player_name}（${data.player_name}）生涯潜力预测报告</h4>
                 <div class="space-y-4">
-                    <div>
-                        <h5 class="text-lg font-medium text-white mb-2">基本信息</h5>
-                        <ul class="list-disc list-inside text-gray-300 space-y-1">
-                            <li>进入联盟年龄：${data.newbie_age}岁</li>
-                            <li>技术定位：${data.player_position}</li>
-                            <li>当前生涯长度：${data.career_length}年</li>
-                        </ul>
-                    </div>
-                    <div>
-                        <h5 class="text-lg font-medium text-white mb-2">新秀期表现</h5>
-                        <ul class="list-disc list-inside text-gray-300 space-y-1">
-                            <li>新秀赛季场均得分：${data.early_avg_score.toFixed(1)}分</li>
-                            <li>新秀期平均出勤率：${data.durability.toFixed(1)}%</li>
-                            <li>伤病风险评分：${data.injury_risk.toFixed(1)}分</li>
-                        </ul>
-                    </div>
-                    <div>
-                        <h5 class="text-lg font-medium text-white mb-2">预测结果</h5>
-                        <ul class="list-disc list-inside text-gray-300 space-y-1">
-                            <li>一级生涯类型：${data.pred_type}</li>
-                            <li>二级分类：${data.sub_type}</li>
-                            <li>生涯潜力综合评分：${data.potential_score}分</li>
-                        </ul>
-                    </div>
-                    <div>
-                        <h5 class="text-lg font-medium text-white mb-2">相似球员参考</h5>
-                        <ul class="list-disc list-inside text-gray-300 space-y-2">
-                            ${data.similar_players.slice(0, 3).map(p => `
-                            <li>${p.name}（${p.type}），新秀场均${p.score.toFixed(1)}分，生涯${p.career_length}年 - ${p.report || `生涯${p.career_length}年，稳定的${p.type}球员`}</li>
-                            `).join('')}
-                        </ul>
-                    </div>
+                    <p><strong class="text-primary">一、基础信息</strong></p>
+                    <p>球员姓名：${playerName}，技术定位：${position}，进入联盟年龄：${age}岁。</p>
+
+                    <p class="mt-4"><strong class="text-primary">二、核心预测结果</strong></p>
+                    <p>1. 生涯类型预测：${predType}（置信度${confidence}%），生涯潜力评分为${potentialScore}分（满分10分）。</p>
+                    <p>2. 耐操度（出勤率）：${durability}%，伤病风险评分：${injuryRisk}分（越低越安全）。</p>
+
+                    <p class="mt-4"><strong class="text-primary">三、发展参考</strong></p>
+                    <p>${similarSummary}</p>
+                    <p>上限发展模板：${document.getElementById('ceilingPlayer').textContent || '暂无'}，下限发展模板：${document.getElementById('floorPlayer').textContent || '暂无'}。</p>
+
+                    <p class="mt-4"><strong class="text-primary">四、补充说明</strong></p>
+                    <p>本预测基于XGBoost模型结合NBA历史老将数据训练得出，核心参考特征为${document.getElementById('coreFeatureTip').textContent.replace('💡 最核心的特征是：', '')}。</p>
+                    <p>预测结果仅作参考，球员实际发展受训练、伤病、战术地位等多重因素影响。</p>
                 </div>
-                ${data.career_length < 3 ? `
-                <div class="mt-6 p-4 bg-warning/10 border border-warning/30 rounded-lg">
-                    <p class="text-warning">⚠️ 特别说明：该球员目前生涯不足3年，数据样本有限，预测结果仅供参考，未来需持续跟踪发展。</p>
-                </div>
-                ` : ''}
-                <div class="mt-8 pt-4 border-t border-gray-700 text-sm text-gray-500 text-center">
-                    *本报告由NBA新秀生涯潜力预测系统自动生成，仅供参考。
-                </div>
-            </div>
             `;
+
             document.getElementById('fullReport').innerHTML = report;
         }
     </script>
