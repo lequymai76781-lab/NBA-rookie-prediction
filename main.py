@@ -1,18 +1,13 @@
 # ====================== 第一步：先导入所有需要的模块 ======================
-from fastapi import FastAPI, HTTPException
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse, FileResponse
-from fastapi.staticfiles import StaticFiles
-from pydantic import BaseModel
+from flask import Flask, jsonify, request, send_file, abort
+from flask_cors import CORS
 import pandas as pd
 import numpy as np
 import joblib
 import os
-from typing import Any
 from sklearn.preprocessing import StandardScaler
 from sklearn.metrics.pairwise import cosine_similarity
 import json
-from contextlib import asynccontextmanager
 
 # ====================== 全局配置 ======================
 # 中文映射，一劳永逸
@@ -48,32 +43,36 @@ preprocessor = None
 rookie_df = None
 veteran_df = None
 
-
-# ====================== 解决NaN序列化问题 ======================
-class NanSafeJSONResponse(JSONResponse):
-    def render(self, content: Any) -> bytes:
-        def replace_nan(o):
-            if isinstance(o, float):
-                if not np.isfinite(o):
-                    return None
-            elif isinstance(o, dict):
-                return {k: replace_nan(v) for k, v in o.items()}
-            elif isinstance(o, list):
-                return [replace_nan(i) for i in o]
-            elif isinstance(o, np.integer):
-                return int(o)
-            elif isinstance(o, np.floating):
-                return float(o) if np.isfinite(o) else None
-            return o
-
-        return json.dumps(
-            replace_nan(content), ensure_ascii=False, separators=(",", ":")
-        ).encode("utf-8")
+# ====================== 初始化Flask应用 ======================
+app = Flask(__name__)
+# 跨域配置：仅允许你的网站rookihe.top调用，和截图完全一致，安全可控
+CORS(app, origins=["https://rookihe.top"])
 
 
-# ====================== 生命周期：启动时加载模型和数据 ======================
-@asynccontextmanager
-async def lifespan(app: FastAPI):
+# ====================== 解决NaN序列化问题（Flask版） ======================
+def replace_nan(o):
+    if isinstance(o, float):
+        if not np.isfinite(o):
+            return None
+    elif isinstance(o, dict):
+        return {k: replace_nan(v) for k, v in o.items()}
+    elif isinstance(o, list):
+        return [replace_nan(i) for i in o]
+    elif isinstance(o, np.integer):
+        return int(o)
+    elif isinstance(o, np.floating):
+        return float(o) if np.isfinite(o) else None
+    return o
+
+
+def safe_jsonify(data):
+    """安全的jsonify，处理NaN、无穷大等无法序列化的数值"""
+    processed_data = replace_nan(data)
+    return jsonify(processed_data)
+
+
+# ====================== 启动时加载模型和数据（和原FastAPI生命周期逻辑一致） ======================
+def load_resources():
     global model, le, feature_cols, preprocessor, rookie_df, veteran_df
     try:
         print("=" * 50)
@@ -90,59 +89,25 @@ async def lifespan(app: FastAPI):
         if 'player_name_cn' not in rookie_df.columns:
             rookie_df['player_name_cn'] = rookie_df['player_name'].map(PLAYER_CN_MAP).fillna(rookie_df['player_name'])
         rookie_df['player_name'] = rookie_df['player_name'].astype(str).str.strip()
-
         # 检查前端页面是否存在
         if os.path.exists(INDEX_HTML_PATH):
             print(f"✅ 前端页面找到：{INDEX_HTML_PATH}")
         else:
             print(f"❌ 警告：前端页面不存在！请确保index.html和main.py在同一个文件夹")
-
         print("🚀 服务启动成功！")
         print(f"🌐 前端页面地址：http://localhost:8000")
-        print(f"📖 API文档地址：http://localhost:8000/docs")
         print("=" * 50)
     except Exception as e:
         print(f"❌ 启动失败！错误：{str(e)}")
         raise e
-    yield
-    print("👋 服务已关闭")
 
 
-# ====================== 初始化FastAPI应用（核心！先创建app，再做其他操作） ======================
-app = FastAPI(
-    title="NBA新秀潜力预测系统",
-    version="2.0",
-    default_response_class=NanSafeJSONResponse,
-    lifespan=lifespan,
-    docs_url="/docs",  # 固定API文档地址，不会和根路径冲突
-    redoc_url=None  # 关闭冗余的redoc文档
-)
+# 应用启动时执行资源加载
+with app.app_context():
+    load_resources()
 
 
-# ====================== 【关键1：先挂载静态文件，再定义路由】 ======================
-# 如果你的前端有css、js、图片等静态文件，放在static文件夹里，就取消下面这行的注释
-# app.mount("/static", StaticFiles(directory=os.path.join(BASE_DIR, "static")), name="static")
-
-# ====================== 【关键2：根路径接口，必须放在所有API接口之前！】 ======================
-@app.get("/", summary="前端首页", description="访问根路径直接打开预测页面")
-async def root():
-    if not os.path.exists(INDEX_HTML_PATH):
-        raise HTTPException(status_code=404, detail="前端页面index.html不存在，请确保文件和main.py在同一文件夹")
-    return FileResponse(INDEX_HTML_PATH)
-
-
-# ====================== CORS跨域配置 ======================
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=False,
-    allow_methods=["*"],
-    allow_headers=["*"],
-    max_age=86400,
-)
-
-
-# ====================== 辅助函数 ======================
+# ====================== 辅助函数（完全保留原有逻辑，无需修改） ======================
 def clean_search_key(key: str) -> str:
     if not isinstance(key, str):
         return ""
@@ -205,28 +170,40 @@ def calculate_similar_players(rookie_row, top_n=5):
     return similar
 
 
-# ====================== 请求模型 ======================
-class PredictRequest(BaseModel):
-    player_name: str
+# ====================== 路由接口（和原FastAPI接口完全兼容，前端无需大改） ======================
+# 根路径接口，访问根路径直接打开预测页面
+@app.route("/", methods=["GET"])
+def root():
+    if not os.path.exists(INDEX_HTML_PATH):
+        abort(404, description="前端页面index.html不存在，请确保文件和main.py在同一文件夹")
+    return send_file(INDEX_HTML_PATH)
 
 
-# ====================== 【关键3：所有API接口都加/api前缀，绝对不会和根路径冲突！】 ======================
-@app.get("/api/rookies", summary="获取新秀列表")
-async def get_rookies():
-    return rookie_df.to_dict(orient="records")
+# 获取新秀列表接口
+@app.route("/api/rookies", methods=["GET"])
+def get_rookies():
+    return safe_jsonify(rookie_df.to_dict(orient="records"))
 
 
-@app.post("/api/predict", summary="核心预测接口")
-async def predict_career(request: PredictRequest):
-    input_name = request.player_name.strip()
+# 核心预测接口
+@app.route("/api/predict", methods=["POST"])
+def predict_career():
+    # 获取请求参数
+    request_data = request.get_json()
+    if not request_data or "player_name" not in request_data:
+        abort(400, description="请求参数错误，必须包含player_name字段")
+
+    input_name = request_data["player_name"].strip()
     clean_input = clean_search_key(input_name)
+
     # 匹配球员
     name_match = rookie_df['player_name'].astype(str).apply(clean_search_key).str.contains(clean_input, na=False)
     cn_name_match = rookie_df['player_name_cn'].astype(str).apply(clean_search_key).str.contains(clean_input, na=False)
     player = rookie_df[name_match | cn_name_match]
 
     if player.empty:
-        raise HTTPException(status_code=404, detail=f"未找到球员「{input_name}」")
+        abort(404, description=f"未找到球员「{input_name}」")
+
     rookie_row = player.iloc[0].to_dict()
 
     # 模型预测
@@ -244,7 +221,7 @@ async def predict_career(request: PredictRequest):
             85 if 'holmgren' in rookie_row.get('player_name', '').lower() else 80
 
     # 返回结果，全字段兜底
-    return {
+    result = {
         "player_name": rookie_row.get("player_name"),
         "player_name_cn": rookie_row.get("player_name_cn", rookie_row.get("player_name")),
         "pred_type": pred_type,
@@ -268,33 +245,58 @@ async def predict_career(request: PredictRequest):
         "stl": float(rookie_row.get("早期抢断", rookie_row.get("STL", 0.8))),
         "blk": float(rookie_row.get("早期盖帽", rookie_row.get("BLK", 1.2)))
     }
+    return safe_jsonify(result)
 
 
-@app.get("/api/feature-importance", summary="获取特征重要性")
-async def get_feature_importance():
+# 获取特征重要性接口
+@app.route("/api/feature-importance", methods=["GET"])
+def get_feature_importance():
     try:
         if hasattr(model, 'feature_importances_'):
             importances = model.feature_importances_
         elif hasattr(model, 'coef_'):
             importances = np.abs(model.coef_[0])
         else:
-            raise HTTPException(status_code=500, detail="模型不支持特征重要性提取")
+            abort(500, description="模型不支持特征重要性提取")
+
         imp_df = pd.DataFrame({
             'feature': feature_cols,
             'importance': importances
         }).sort_values('importance', ascending=False).head(10)
-        return {
+
+        result = {
             "top_features": imp_df.to_dict(orient="records"),
             "core_feature": imp_df.iloc[0]['feature']
         }
+        return safe_jsonify(result)
     except Exception as e:
         print(f"特征重要性接口错误：{str(e)}")
-        raise HTTPException(status_code=500, detail=f"获取特征重要性失败：{str(e)}")
+        abort(500, description=f"获取特征重要性失败：{str(e)}")
 
 
-@app.get("/api/health", summary="健康检查")
-async def health_check():
-    return {"status": "ok", "message": "NBA新秀潜力预测 API 运行正常"}
+# 健康检查接口
+@app.route("/api/health", methods=["GET"])
+def health_check():
+    return safe_jsonify({"status": "ok", "message": "NBA新秀潜力预测 API 运行正常"})
+
+
+# 全局错误处理
+@app.errorhandler(400)
+def bad_request(error):
+    return safe_jsonify({"detail": error.description}), 400
+
+
+@app.errorhandler(404)
+def not_found(error):
+    return safe_jsonify({"detail": error.description}), 404
+
+
+@app.errorhandler(500)
+def server_error(error):
+    return safe_jsonify({"detail": error.description}), 500
+
 
 # ====================== 启动命令 ======================
-# uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+if __name__ == "__main__":
+    # 端口和原FastAPI保持一致，前端无需修改端口
+    app.run(host="0.0.0.0", port=8000, debug=True)
