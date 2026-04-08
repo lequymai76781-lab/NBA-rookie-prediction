@@ -389,15 +389,31 @@
             }
         }
 
-        async function loadFeatureImportance() {
+                async function loadFeatureImportance() {
             try {
                 const res = await fetch(`${API_BASE}/api/feature-importance`);
-                if (!res.ok) return;
+                // 接口报错处理
+                if (!res.ok) {
+                    const errData = await res.json().catch(() => ({}));
+                    console.error("特征接口报错：", errData);
+                    document.getElementById('coreFeatureTip').textContent = `⚠️ 特征数据加载失败：${errData.detail || '接口异常'}`;
+                    return;
+                }
+
                 const data = await res.json();
+                // 空数据兜底
+                if (!data.top_features || data.top_features.length === 0) {
+                    document.getElementById('coreFeatureTip').textContent = `⚠️ 暂无特征重要性数据`;
+                    return;
+                }
+
+                // 正常渲染核心特征提示
                 document.getElementById('coreFeatureTip').textContent = `💡 最核心的特征是：${data.core_feature}`;
+                // 渲染图表
                 renderFeatureChart(data.top_features);
             } catch (e) {
                 console.error("特征重要性加载失败", e);
+                document.getElementById('coreFeatureTip').textContent = `⚠️ 特征数据加载失败，请检查后端服务`;
             }
         }
 
@@ -787,16 +803,27 @@
             });
         }
 
-        function renderFeatureChart(topFeatures) {
-            if (!topFeatures || topFeatures.length === 0) return;
-            if (featureChart) featureChart.destroy();
+                function renderFeatureChart(topFeatures) {
+            // 先销毁旧图表，避免重复渲染
+            if (featureChart) {
+                featureChart.destroy();
+                featureChart = null;
+            }
+
+            // 空数据兜底
+            if (!topFeatures || topFeatures.length === 0) {
+                document.getElementById('featureChart').parentElement.innerHTML = '<p class="text-center text-gray-500 py-20">暂无特征重要性数据</p>';
+                return;
+            }
 
             const ctx = document.getElementById('featureChart').getContext('2d');
-            // 反转数据让重要性最高的在顶部
+            // 反转数据，让重要性最高的在顶部
             const reversed = [...topFeatures].reverse();
-            const labels = reversed.map(item => item.name);
+            // 修复核心bug：用item.feature 替代 item.name
+            const labels = reversed.map(item => item.feature);
             const values = reversed.map(item => item.importance);
 
+            // 图表配置，适配暗黑风格
             featureChart = new Chart(ctx, {
                 type: 'bar',
                 data: {
@@ -806,7 +833,8 @@
                         data: values,
                         backgroundColor: function(context) {
                             const value = context.raw;
-                            const alpha = Math.min(1, 0.4 + (value / Math.max(...values)) * 0.6);
+                            const maxValue = Math.max(...values);
+                            const alpha = Math.min(1, 0.4 + (value / maxValue) * 0.6);
                             return `rgba(16, 185, 129, ${alpha})`;
                         },
                         borderColor: 'rgb(16, 185, 129)',
@@ -817,15 +845,25 @@
                 },
                 options: {
                     indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
                     scales: {
                         x: {
                             beginAtZero: true,
-                            ticks: { color: '#9ca3af', font: { size: 12 } },
+                            ticks: {
+                                color: '#9ca3af',
+                                font: { size: 12 },
+                                backdropColor: 'transparent'
+                            },
                             grid: { color: '#374151', lineWidth: 1 },
                             border: { color: '#4b5563' }
                         },
                         y: {
-                            ticks: { color: '#f3f4f6', font: { size: 13, weight: '500' } },
+                            ticks: {
+                                color: '#f3f4f6',
+                                font: { size: 13, weight: '500' },
+                                backdropColor: 'transparent'
+                            },
                             grid: { display: false },
                             border: { color: '#4b5563' }
                         }
@@ -839,6 +877,7 @@
                             borderColor: '#10b981',
                             borderWidth: 1,
                             padding: 10,
+                            cornerRadius: 6,
                             callbacks: {
                                 label: function(context) {
                                     return `重要性: ${context.raw.toFixed(4)}`;
@@ -846,7 +885,6 @@
                             }
                         }
                     },
-                    maintainAspectRatio: false,
                     animation: {
                         duration: 1000,
                         easing: 'easeOutQuart'
