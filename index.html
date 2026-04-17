@@ -1,940 +1,1165 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh-CN" class="scroll-smooth dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NBA新秀生涯潜力预测系统</title>
+    <title>NBA新秀潜力预测系统</title>
+    <!-- 引入CDN资源 -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
+
+    <!-- 自定义Tailwind配置 -->
     <script>
         tailwind.config = {
+            darkMode: 'class',
             theme: {
                 extend: {
                     colors: {
-                        primary: '#10b981',
+                        primary: '#10b981', // 翡翠绿，呼应截图风格
                         secondary: '#3b82f6',
-                        danger: '#ef4444',
-                        warning: '#f59e0b',
-                        info: '#8b5cf6',
                         dark: {
-                            100: '#1f2937',
-                            200: '#111827',
-                            300: '#030712',
+                            bg: '#0a0a0a',   // 更深的背景
+                            card: '#141414', // 卡片背景
+                            cardHover: '#1f1f1f',
+                            text: '#e5e7eb',
+                            textMuted: '#9ca3af',
+                            border: '#262626'
                         }
                     },
-                    fontFamily: {
-                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                    animation: {
+                        'fade-in': 'fadeIn 0.6s ease-out',
+                        'fade-in-delay-1': 'fadeIn 0.6s ease-out 0.1s both',
+                        'fade-in-delay-2': 'fadeIn 0.6s ease-out 0.2s both',
+                        'fade-in-delay-3': 'fadeIn 0.6s ease-out 0.3s both',
+                        'count-up': 'countUp 1.5s ease-out forwards',
+                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite'
                     },
+                    keyframes: {
+                        fadeIn: {
+                            '0%': { opacity: '0', transform: 'translateY(20px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' }
+                        },
+                        countUp: {
+                            '0%': { opacity: '0', transform: 'scale(0.8)' },
+                            '100%': { opacity: '1', transform: 'scale(1)' }
+                        }
+                    }
                 }
             }
         }
     </script>
+
     <style type="text/tailwindcss">
         @layer utilities {
-            .content-auto { content-visibility: auto; }
-            .card-gradient { @apply bg-gradient-to-br from-dark-100 to-dark-200 border border-gray-700 rounded-2xl; }
-            .text-shadow { text-shadow: 0 2px 4px rgba(0,0,0,0.3); }
+            /* 环形进度条 */
+            .circle-progress {
+                position: relative;
+                width: 140px;
+                height: 140px;
+                border-radius: 50%;
+                background: conic-gradient(var(--progress-color, #10b981) var(--progress-value), #262626 0);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+            .circle-progress::after {
+                content: '';
+                position: absolute;
+                width: 110px;
+                height: 110px;
+                border-radius: 50%;
+                background: #0a0a0a;
+            }
+            .circle-progress-text {
+                position: relative;
+                z-index: 1;
+                font-weight: bold;
+            }
+
+            /* 骨架屏 */
+            .skeleton {
+                background: linear-gradient(90deg, #1f1f1f 25%, #262626 50%, #1f1f1f 75%);
+                background-size: 200% 100%;
+                animation: skeleton-loading 1.5s infinite;
+            }
+            @keyframes skeleton-loading {
+                0% { background-position: 200% 0; }
+                100% { background-position: -200% 0; }
+            }
+
+            /* Toast */
+            .toast {
+                transform: translateY(100px);
+                opacity: 0;
+                transition: all 0.3s ease;
+            }
+            .toast.show {
+                transform: translateY(0);
+                opacity: 1;
+            }
+
+            /* 导航栏滚动 */
+            .nav-scrolled {
+                @apply bg-dark-bg/90 backdrop-blur-md border-b border-dark-border;
+            }
+
+            /* 渐变文字 */
+            .text-gradient {
+                background: linear-gradient(135deg, #10b981 0%, #34d399 100%);
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+                background-clip: text;
+            }
+
+            /* 搜索框聚焦 */
+            .search-glow:focus {
+                box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
+            }
+        }
+    </style>
+
+    <style>
+        body {
+            background-color: #0a0a0a;
+            color: #e5e7eb;
+        }
+
+        /* 搜索补全下拉 */
+        .autocomplete-dropdown {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+        .autocomplete-dropdown.show {
+            max-height: 240px;
+        }
+
+        /* 自定义滚动条 */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0a0a0a;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #262626;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #374151;
         }
     </style>
 </head>
-<body class="min-h-screen bg-dark-300 text-gray-100">
-    <nav class="nav-bg sticky top-0 z-50 bg-dark-200/80 backdrop-blur-md border-b border-gray-800">
-        <div class="max-w-screen-2xl mx-auto px-8 pt-6 pb-4 flex justify-between items-center">
+<body class="min-h-screen">
+    <!-- 导航栏 -->
+    <nav id="navbar" class="fixed top-0 left-0 right-0 z-50 bg-dark-bg/80 backdrop-blur-sm transition-all duration-300 py-4 px-6 md:px-8">
+        <div class="max-w-7xl mx-auto flex items-center justify-between">
+            <!-- Logo -->
             <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
-                    <span class="text-white font-bold text-xl">🏀</span>
+                <div class="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-emerald-400 flex items-center justify-center">
+                    <i class="fa fa-basketball-ball text-white text-xl"></i>
                 </div>
-                <h1 class="text-2xl font-bold text-primary">NBA新秀 潜力预测</h1>
+                <h1 class="text-2xl font-bold">NBA新秀 <span class="text-gradient">潜力预测</span></h1>
             </div>
-            <div class="hidden md:flex items-center gap-8 text-gray-400">
-                <a href="#" class="hover:text-white transition-colors">首页</a>
-                <a href="#predict" class="hover:text-white transition-colors">开始预测</a>
-                <a href="#veterans" class="hover:text-white transition-colors">历史模板</a>
-                <a href="#metrics" class="hover:text-white transition-colors">硬核指标</a>
+
+            <!-- 导航链接 -->
+            <div class="hidden md:flex items-center gap-8">
+                <a href="#" class="text-dark-textMuted hover:text-primary transition-colors">首页</a>
+                <a href="#predict" class="text-dark-textMuted hover:text-primary transition-colors">开始预测</a>
+                <a href="#compare" class="text-dark-textMuted hover:text-primary transition-colors">历史模板</a>
+                <a href="#features" class="text-dark-textMuted hover:text-primary transition-colors">硬核指标</a>
             </div>
-            <button class="px-6 py-2 bg-white text-black font-medium rounded-full hover:bg-gray-200 transition-colors">
-                立即预测新秀
-            </button>
+
+            <!-- 功能按钮 -->
+            <div class="flex items-center gap-4">
+                <!-- 主题切换 -->
+                <button id="theme-toggle" class="p-2 rounded-full hover:bg-dark-card transition-colors">
+                    <i class="fa fa-moon-o text-dark-textMuted text-xl"></i>
+                </button>
+
+                <!-- 收藏入口 -->
+                <button id="favorites-btn" class="p-2 rounded-full hover:bg-dark-card transition-colors relative">
+                    <i class="fa fa-star text-dark-textMuted text-xl"></i>
+                    <span id="favorites-count" class="absolute -top-1 -right-1 bg-primary text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">0</span>
+                </button>
+
+                <!-- 立即预测按钮 -->
+                <a href="#predict" class="hidden md:block px-6 py-2 border border-dark-border rounded-full hover:border-primary hover:text-primary transition-all">
+                    立即预测新秀
+                </a>
+            </div>
         </div>
     </nav>
 
-    <section id="hero" class="max-w-screen-2xl mx-auto px-8 pt-16 pb-20">
-        <div class="text-center mb-8">
-            <div class="inline-flex items-center gap-2 bg-dark-100 border border-gray-700 rounded-full px-4 py-1 text-sm text-gray-400 mb-6">
-                <span class="w-2 h-2 rounded-full bg-primary"></span>
-                基于 XGBoost + 历史老将数据
+    <!-- 回到顶部按钮 -->
+    <button id="back-to-top" class="fixed bottom-8 right-8 bg-primary text-white p-3 rounded-full shadow-lg opacity-0 invisible transition-all duration-300 hover:bg-emerald-600 z-40">
+        <i class="fa fa-arrow-up"></i>
+    </button>
+
+    <!-- Hero区域 -->
+    <section class="pt-32 pb-20 px-6 md:px-8">
+        <div class="max-w-4xl mx-auto text-center space-y-8">
+            <!-- 标签 -->
+            <div class="inline-flex items-center gap-2 px-4 py-2 bg-dark-card border border-dark-border rounded-full animate-fade-in">
+                <span class="w-2 h-2 rounded-full bg-primary animate-pulse-slow"></span>
+                <span class="text-dark-textMuted text-sm">基于 <span class="text-primary font-medium">XGBoost</span> + 历史老将数据</span>
             </div>
-            <h2 class="text-[clamp(2.5rem,8vw,5rem)] font-bold text-white leading-tight text-shadow mb-4">
-                新秀生涯<br>潜力预测系统
+
+            <!-- 大标题 -->
+            <h2 class="text-5xl md:text-7xl font-bold leading-tight animate-fade-in-delay-1">
+                新秀生涯<br>
+                <span class="text-gradient">潜力预测系统</span>
             </h2>
-            <p class="text-[clamp(1.1rem,3vw,1.5rem)] text-gray-400 max-w-2xl mx-auto">
-                复刻 Supabase 极致暗黑美学<br>精准预测每一位新秀的10年巅峰路径
+
+            <!-- 副标题 -->
+            <p class="text-xl md:text-2xl text-dark-textMuted max-w-2xl mx-auto animate-fade-in-delay-2">
+                复刻 Supabase 极致暗黑美学<br>
+                精准预测每一位新秀的10年巅峰路径
             </p>
+
+            <!-- 搜索框 -->
+            <div id="predict" class="relative max-w-2xl mx-auto animate-fade-in-delay-3">
+                <div class="relative">
+                    <i class="fa fa-search absolute left-6 top-1/2 -translate-y-1/2 text-dark-textMuted text-xl"></i>
+                    <input
+                        type="text"
+                        id="search-input"
+                        placeholder="输入新秀姓名，如 Victor Wembanyama..."
+                        class="w-full pl-14 pr-32 py-5 bg-dark-card border border-dark-border rounded-full text-lg focus:outline-none focus:border-primary search-glow transition-all"
+                    >
+                    <button id="search-btn" class="absolute right-2 top-1/2 -translate-y-1/2 px-8 py-3 bg-primary text-white rounded-full hover:bg-emerald-600 transition-colors font-medium">
+                        搜索
+                    </button>
+                </div>
+
+                <!-- 搜索补全下拉 -->
+                <div id="autocomplete-dropdown" class="autocomplete-dropdown absolute top-full left-0 right-0 mt-2 bg-dark-card border border-dark-border rounded-2xl shadow-2xl z-10 overflow-y-auto">
+                    <ul id="dropdown-list" class="divide-y divide-dark-border"></ul>
+                </div>
+            </div>
         </div>
-        <div class="max-w-2xl mx-auto mt-12">
-            <div class="relative">
-                <input
-                    type="text"
-                    id="searchInput"
-                    placeholder="搜索新秀... 文班亚马 / victor / 班切罗"
-                    class="w-full bg-dark-100 border border-gray-700 rounded-full px-6 py-4 pl-14 pr-36 text-white focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
-                >
-                <span class="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400">🔍</span>
-                <button id="searchBtn" class="absolute right-2 top-1/2 -translate-y-1/2 bg-white text-black font-medium rounded-full px-6 py-2 hover:bg-gray-200 transition-colors">
-                    搜索
+    </section>
+
+    <!-- 主内容区 -->
+    <main class="max-w-7xl mx-auto px-6 md:px-8 pb-20 space-y-20">
+        <!-- 加载骨架屏 -->
+        <div id="skeleton-loader" class="space-y-12">
+            <!-- 预测结果骨架 -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div class="lg:col-span-1">
+                    <div class="skeleton h-80 rounded-3xl"></div>
+                </div>
+                <div class="lg:col-span-2">
+                    <div class="skeleton h-80 rounded-3xl"></div>
+                </div>
+            </div>
+
+            <!-- 对比区骨架 -->
+            <div class="skeleton h-12 rounded-xl mb-6"></div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <div class="skeleton h-14 rounded-xl"></div>
+                <div class="skeleton h-14 rounded-xl"></div>
+            </div>
+            <div class="skeleton h-96 rounded-3xl"></div>
+
+            <!-- 列表骨架 -->
+            <div class="skeleton h-12 rounded-xl mb-6"></div>
+            <div class="space-y-3">
+                <div class="grid grid-cols-6 gap-4">
+                    <div class="skeleton h-10 rounded-xl"></div>
+                    <div class="skeleton h-10 rounded-xl"></div>
+                    <div class="skeleton h-10 rounded-xl"></div>
+                    <div class="skeleton h-10 rounded-xl"></div>
+                    <div class="skeleton h-10 rounded-xl"></div>
+                    <div class="skeleton h-10 rounded-xl"></div>
+                </div>
+                <div class="grid grid-cols-6 gap-4">
+                    <div class="skeleton h-12 rounded-xl"></div>
+                    <div class="skeleton h-12 rounded-xl"></div>
+                    <div class="skeleton h-12 rounded-xl"></div>
+                    <div class="skeleton h-12 rounded-xl"></div>
+                    <div class="skeleton h-12 rounded-xl"></div>
+                    <div class="skeleton h-12 rounded-xl"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 实际内容区（初始隐藏） -->
+        <div id="content" class="hidden space-y-20">
+            <!-- 核心预测结果 -->
+            <section id="predict-result" class="space-y-8">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-3xl font-bold">🎯 核心预测结果</h3>
+                    <div class="relative">
+                        <select id="player-select" class="appearance-none bg-dark-card border border-dark-border rounded-full px-6 py-3 pr-10 focus:outline-none focus:border-primary transition-colors">
+                            <option value="">选择球员查看详情</option>
+                        </select>
+                        <i class="fa fa-chevron-down absolute right-4 top-1/2 -translate-y-1/2 text-dark-textMuted pointer-events-none"></i>
+                    </div>
+                </div>
+
+                <!-- 预测卡片 -->
+                <div id="prediction-card" class="hidden grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    <!-- 左侧：潜力评分 -->
+                    <div class="bg-dark-card border border-dark-border rounded-3xl p-8 text-center space-y-6">
+                        <div class="flex justify-center">
+                            <div class="circle-progress" id="potential-circle">
+                                <div class="circle-progress-text text-3xl">
+                                    <span class="count-number" id="potential-score">0</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <h4 class="text-lg text-dark-textMuted mb-1">📈 预测生涯类型</h4>
+                            <p class="text-4xl font-bold text-gradient" id="pred-type">球队基石型</p>
+                        </div>
+                        <div class="pt-4 border-t border-dark-border">
+                            <p class="text-2xl text-dark-textMuted">置信度: <span class="text-white font-bold" id="confidence">0</span>%</p>
+                        </div>
+                    </div>
+
+                    <!-- 右侧：详细指标 -->
+                    <div class="lg:col-span-2 bg-dark-card border border-dark-border rounded-3xl p-8 space-y-8">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <h4 class="text-2xl font-bold" id="player-name-cn">维克托·文班亚马</h4>
+                                <p class="text-dark-textMuted" id="player-name-en">Victor Wembanyama</p>
+                            </div>
+                            <button id="favorite-player-btn" class="p-3 rounded-full hover:bg-dark-cardHover transition-colors">
+                                <i class="fa fa-star-o text-2xl text-dark-textMuted"></i>
+                            </button>
+                        </div>
+
+                        <!-- 硬核指标 -->
+                        <div id="features" class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                            <div class="bg-dark-bg rounded-2xl p-4">
+                                <p class="text-dark-textMuted text-sm mb-1">新秀年龄</p>
+                                <p class="text-2xl font-bold"><span class="count-number" id="newbie-age">0</span>岁</p>
+                            </div>
+                            <div class="bg-dark-bg rounded-2xl p-4">
+                                <p class="text-dark-textMuted text-sm mb-1">早期得分</p>
+                                <p class="text-2xl font-bold"><span class="count-number" id="early-avg-score">0</span>分</p>
+                            </div>
+                            <div class="bg-dark-bg rounded-2xl p-4">
+                                <p class="text-dark-textMuted text-sm mb-1">出勤率</p>
+                                <p class="text-2xl font-bold"><span class="count-number" id="durability">0</span>%</p>
+                            </div>
+                            <div class="bg-dark-bg rounded-2xl p-4">
+                                <p class="text-dark-textMuted text-sm mb-1">伤病风险</p>
+                                <p class="text-2xl font-bold"><span class="count-number" id="injury-risk">0</span></p>
+                            </div>
+                        </div>
+
+                        <!-- 进阶数据 -->
+                        <div class="pt-6 border-t border-dark-border">
+                            <h5 class="text-lg font-semibold mb-4">📊 进阶高阶数据</h5>
+                            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                <div>
+                                    <div class="flex justify-between mb-1">
+                                        <span class="text-dark-textMuted">PER</span>
+                                        <span class="font-medium"><span class="count-number" id="per">0</span></span>
+                                    </div>
+                                    <div class="h-2 bg-dark-border rounded-full overflow-hidden">
+                                        <div class="h-full bg-primary rounded-full" id="per-bar" style="width: 0%"></div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="flex justify-between mb-1">
+                                        <span class="text-dark-textMuted">TS%</span>
+                                        <span class="font-medium"><span class="count-number" id="ts-percent">0</span>%</span>
+                                    </div>
+                                    <div class="h-2 bg-dark-border rounded-full overflow-hidden">
+                                        <div class="h-full bg-secondary rounded-full" id="ts-bar" style="width: 0%"></div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="flex justify-between mb-1">
+                                        <span class="text-dark-textMuted">USG%</span>
+                                        <span class="font-medium"><span class="count-number" id="usg-percent">0</span>%</span>
+                                    </div>
+                                    <div class="h-2 bg-dark-border rounded-full overflow-hidden">
+                                        <div class="h-full bg-purple-500 rounded-full" id="usg-bar" style="width: 0%"></div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="flex justify-between mb-1">
+                                        <span class="text-dark-textMuted">WS</span>
+                                        <span class="font-medium"><span class="count-number" id="ws">0</span></span>
+                                    </div>
+                                    <div class="h-2 bg-dark-border rounded-full overflow-hidden">
+                                        <div class="h-full bg-orange-500 rounded-full" id="ws-bar" style="width: 0%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 历史相似老将 -->
+            <section id="compare" class="space-y-8">
+                <h3 class="text-3xl font-bold">👥 历史相似老将参考</h3>
+                <div id="similar-players" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+            </section>
+
+            <!-- 球员对比 -->
+            <section class="space-y-8">
+                <h3 class="text-3xl font-bold">⚔️ 新秀横向对比</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="relative">
+                        <label class="block text-dark-textMuted mb-2 ml-2">球员 A</label>
+                        <select id="compare-player1" class="w-full bg-dark-card border border-dark-border rounded-2xl px-6 py-4 focus:outline-none focus:border-primary transition-colors text-lg">
+                            <option value="">选择第一位球员</option>
+                        </select>
+                    </div>
+                    <div class="relative">
+                        <label class="block text-dark-textMuted mb-2 ml-2">球员 B</label>
+                        <select id="compare-player2" class="w-full bg-dark-card border border-dark-border rounded-2xl px-6 py-4 focus:outline-none focus:border-primary transition-colors text-lg">
+                            <option value="">选择第二位球员</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- 对比雷达图 -->
+                <div id="comparison-view" class="hidden bg-dark-card border border-dark-border rounded-3xl p-8">
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        <div class="h-96">
+                            <canvas id="radar-chart"></canvas>
+                        </div>
+                        <div class="space-y-6" id="comparison-stats"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 新秀列表 -->
+            <section class="space-y-8">
+                <h3 class="text-3xl font-bold">📋 全部新秀列表</h3>
+                <div class="overflow-x-auto bg-dark-card border border-dark-border rounded-3xl">
+                    <table class="w-full">
+                        <thead>
+                            <tr class="border-b border-dark-border">
+                                <th class="px-8 py-5 text-left cursor-pointer hover:text-primary transition-colors" data-sort="player_name_cn">
+                                    球员姓名 <i class="fa fa-sort ml-2 text-dark-textMuted"></i>
+                                </th>
+                                <th class="px-8 py-5 text-left cursor-pointer hover:text-primary transition-colors" data-sort="player_position">
+                                    位置 <i class="fa fa-sort ml-2 text-dark-textMuted"></i>
+                                </th>
+                                <th class="px-8 py-5 text-left cursor-pointer hover:text-primary transition-colors" data-sort="newbie_age">
+                                    年龄 <i class="fa fa-sort ml-2 text-dark-textMuted"></i>
+                                </th>
+                                <th class="px-8 py-5 text-left cursor-pointer hover:text-primary transition-colors" data-sort="early_avg_score">
+                                    早期得分 <i class="fa fa-sort ml-2 text-dark-textMuted"></i>
+                                </th>
+                                <th class="px-8 py-5 text-left cursor-pointer hover:text-primary transition-colors" data-sort="potential_score">
+                                    潜力值 <i class="fa fa-sort ml-2 text-dark-textMuted"></i>
+                                </th>
+                                <th class="px-8 py-5 text-left">收藏</th>
+                            </tr>
+                        </thead>
+                        <tbody id="players-table-body" class="divide-y divide-dark-border"></tbody>
+                    </table>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- 收藏列表弹窗 -->
+    <div id="favorites-modal" class="fixed inset-0 bg-black/70 z-50 hidden items-center justify-center p-4">
+        <div class="bg-dark-card border border-dark-border rounded-3xl w-full max-w-lg p-8 shadow-2xl">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-2xl font-bold">⭐ 我的收藏</h3>
+                <button id="close-favorites" class="text-dark-textMuted hover:text-white transition-colors">
+                    <i class="fa fa-times text-2xl"></i>
                 </button>
             </div>
+            <div id="favorites-list" class="space-y-3 max-h-80 overflow-y-auto"></div>
+            <button id="clear-favorites" class="mt-6 w-full py-3 bg-red-500/10 text-red-500 border border-red-500/20 rounded-2xl hover:bg-red-500/20 transition-colors font-medium">
+                清空收藏
+            </button>
         </div>
-    </section>
-
-    <div id="loading" class="hidden max-w-screen-2xl mx-auto px-8 pb-12">
-        <p class="text-center text-primary text-lg">正在从后端加载预测结果...</p>
     </div>
 
-    <section id="predict" class="max-w-screen-2xl mx-auto px-8 pb-16">
-        <div class="flex justify-between items-center mb-8">
-            <h3 class="text-3xl font-bold text-white">
-                <span class="text-primary">🎯</span> 核心预测结果
-            </h3>
-            <select id="playerSelect" class="bg-dark-100 border border-gray-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-primary">
-                <option value="">请选择球员</option>
-            </select>
-        </div>
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <div class="space-y-6">
-                <div id="predTypeCard" class="card-gradient p-8 text-center">
-                    <p class="text-gray-400 mb-2">📌 预测生涯类型</p>
-                    <h4 id="predType" class="text-[clamp(2rem,5vw,3.5rem)] font-bold text-primary mb-2">--</h4>
-                    <p id="predConfidence" class="text-xl text-gray-300 mb-4">置信度: --</p>
-                    <p id="predDesc" class="text-gray-400 mb-4">--</p>
-                    <p id="predNote" class="text-sm text-gray-500 bg-dark-300/50 rounded-lg py-2 px-4">--</p>
-                </div>
-                <div class="grid grid-cols-2 gap-4">
-                    <div id="subTypeCard" class="card-gradient p-6 text-center">
-                        <p class="text-gray-400 text-sm mb-2">📌 二级分类</p>
-                        <h5 id="subType" class="text-2xl font-bold text-white">--</h5>
-                    </div>
-                    <div id="scoreCard" class="card-gradient p-6 text-center">
-                        <p class="text-gray-400 text-sm mb-2">🏅 生涯潜力评分</p>
-                        <h5 id="potentialScore" class="text-3xl font-bold text-primary">--</h5>
-                    </div>
-                </div>
-                <div id="positionCard" class="card-gradient p-4">
-                    <p class="text-gray-400 text-sm mb-1">💡 当前新秀技术定位</p>
-                    <p id="playerPosition" class="text-xl font-medium text-white">--</p>
-                </div>
-            </div>
-            <div class="space-y-6">
-                <div class="card-gradient p-6">
-                    <h4 class="text-xl font-bold text-white mb-4">📋 历史相似老将参考</h4>
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left">
-                            <thead>
-                                <tr class="border-b border-gray-700">
-                                    <th class="pb-3 text-gray-400 font-medium">球员</th>
-                                    <th class="pb-3 text-gray-400 font-medium">生涯类型</th>
-                                    <th class="pb-3 text-gray-400 font-medium">新秀得分</th>
-                                    <th class="pb-3 text-gray-400 font-medium">生涯长度</th>
-                                </tr>
-                            </thead>
-                            <tbody id="similarPlayersTable">
-                                <tr><td colspan="4" class="py-4 text-center text-gray-500">暂无数据</td></tr>
-                            </tbody>
-                        </table>
-                    </div>
-                    <div class="mt-6">
-                        <button id="toggleReportBtn" class="w-full flex items-center justify-between bg-dark-300/50 rounded-lg px-4 py-2 text-gray-300 hover:bg-dark-300 transition-colors">
-                            <span>📖 查看相似球员生涯简述</span>
-                            <span id="toggleIcon">▼</span>
-                        </button>
-                        <div id="similarReport" class="hidden mt-4 space-y-3 max-h-60 overflow-y-auto pr-2">
-                            <p class="text-gray-500 text-center">暂无数据</p>
-                        </div>
-                    </div>
-                </div>
-                <div class="card-gradient p-6">
-                    <h4 class="text-xl font-bold text-white mb-4">🎯 发展模板参考</h4>
-                    <div class="grid grid-cols-2 gap-4">
-                        <div class="bg-dark-300/50 rounded-xl p-4 border border-gray-700">
-                            <p class="text-gray-400 text-sm mb-2">📈 上限模板</p>
-                            <p id="ceilingPlayer" class="font-medium text-white">--</p>
-                            <p id="ceilingDesc" class="text-sm text-gray-400 mt-1">--</p>
-                        </div>
-                        <div class="bg-dark-300/50 rounded-xl p-4 border border-gray-700">
-                            <p class="text-gray-400 text-sm mb-2">📉 下限模板</p>
-                            <p id="floorPlayer" class="font-medium text-white">--</p>
-                            <p id="floorDesc" class="text-sm text-gray-400 mt-1">--</p>
-                        </div>
-                    </div>
-                    <p class="text-xs text-gray-500 mt-3">注：上下限基于最相似的5位历史老将的巅峰高度综合评定。</p>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <section id="metrics" class="max-w-screen-2xl mx-auto px-8 pb-16">
-        <h3 class="text-3xl font-bold text-white mb-8">
-            <span class="text-primary">📊</span> 新秀硬核指标分析
-        </h3>
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <div id="durabilityCard" class="card-gradient p-6 text-center">
-                <p class="text-gray-400 mb-2">💪 耐操度（出勤率）</p>
-                <h4 id="durabilityValue" class="text-3xl font-bold text-white mb-1">--</h4>
-                <p id="durabilityDesc" class="text-sm text-gray-400">--</p>
-            </div>
-            <div id="injuryCard" class="card-gradient p-6 text-center">
-                <p class="text-gray-400 mb-2">🩹 伤病风险评分</p>
-                <h4 id="injuryValue" class="text-3xl font-bold text-white mb-1">--</h4>
-                <p id="injuryDesc" class="text-sm text-gray-400">--</p>
-            </div>
-            <div id="attendanceCard" class="card-gradient p-6 text-center">
-                <p class="text-gray-400 mb-2">🗓️ 新秀期平均出勤率</p>
-                <h4 id="attendanceValue" class="text-3xl font-bold text-white mb-1">--</h4>
-                <p id="attendanceDesc" class="text-sm text-gray-400">--</p>
-            </div>
-            <div id="ageCard" class="card-gradient p-6 text-center">
-                <p class="text-gray-400 mb-2">🎂 进入联盟年龄</p>
-                <h4 id="ageValue" class="text-3xl font-bold text-white mb-1">--</h4>
-                <p id="ageDesc" class="text-sm text-gray-400">--</p>
-            </div>
-        </div>
-    </section>
-
-    <section class="max-w-screen-2xl mx-auto px-8 pb-16">
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <div class="card-gradient p-6">
-                <h4 class="text-xl font-bold text-white mb-6">📈 高阶数据能力雷达图</h4>
-                <div class="aspect-square">
-                    <canvas id="radarChart"></canvas>
-                </div>
-            </div>
-            <div class="card-gradient p-6">
-                <h4 class="text-xl font-bold text-white mb-6">🔮 未来5年得分趋势预测</h4>
-                <div class="aspect-[4/3]">
-                    <canvas id="trendChart"></canvas>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <section id="featureImportance" class="max-w-screen-2xl mx-auto px-8 pb-16">
-        <h3 class="text-3xl font-bold text-white mb-6">
-            <span class="text-primary">📝</span> 预测特征重要性
-        </h3>
-        <div class="card-gradient p-6 mb-4">
-            <p id="coreFeatureTip" class="text-center text-gray-300 bg-dark-300/50 rounded-lg py-3 px-4">
-                💡 最核心的特征是：--
-            </p>
-        </div>
-        <div class="card-gradient p-6">
-            <h4 class="text-xl font-bold text-white mb-6 text-center">影响生涯预测的Top10特征</h4>
-            <div class="h-[500px] w-full">
-                <canvas id="featureChart"></canvas>
-            </div>
-        </div>
-    </section>
-
-    <section id="veterans" class="max-w-screen-2xl mx-auto px-8 pb-16">
-        <h3 class="text-3xl font-bold text-white mb-8">
-            <span class="text-primary">🔍</span> 最接近的5位历史模板球员
-        </h3>
-        <p class="text-gray-400 mb-6">以下是与该新秀最接近的5位历史老将，可作为发展参考。</p>
-        <div class="card-gradient p-6 overflow-x-auto">
-            <table class="w-full text-left">
-                <thead>
-                    <tr class="border-b border-gray-700">
-                        <th class="pb-4 text-gray-400 font-medium">历史球员</th>
-                        <th class="pb-4 text-gray-400 font-medium">最终生涯类型</th>
-                        <th class="pb-4 text-gray-400 font-medium">新秀场均得分</th>
-                        <th class="pb-4 text-gray-400 font-medium">场均篮板</th>
-                        <th class="pb-4 text-gray-400 font-medium">场均助攻</th>
-                        <th class="pb-4 text-gray-400 font-medium">场均抢断</th>
-                        <th class="pb-4 text-gray-400 font-medium">场均盖帽</th>
-                        <th class="pb-4 text-gray-400 font-medium">生涯长度</th>
-                    </tr>
-                </thead>
-                <tbody id="fullSimilarTable">
-                    <tr><td colspan="8" class="py-6 text-center text-gray-500">暂无数据</td></tr>
-                </tbody>
-            </table>
-        </div>
-    </section>
-
-    <section class="max-w-screen-2xl mx-auto px-8 pb-20">
-        <h3 class="text-3xl font-bold text-white mb-8">
-            <span class="text-primary">📄</span> 球员简要预测报告（纯文字版）
-        </h3>
-        <div id="fullReport" class="card-gradient p-8 text-gray-300 leading-relaxed">
-            <p class="text-center text-gray-500">暂无预测报告</p>
-        </div>
-    </section>
+    <!-- Toast通知容器 -->
+    <div id="toast-container" class="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 flex flex-col gap-3"></div>
 
     <script>
-        const API_BASE = window.location.origin;
-        let currentRookies = [];
-        let currentPlayer = null;
-        let radarChart = null;
-        let trendChart = null;
-        let featureChart = null;
-
-        window.onload = async () => {
-            await fetchRookies();
-            await loadFeatureImportance();
-            document.getElementById('toggleReportBtn').addEventListener('click', () => {
-                const report = document.getElementById('similarReport');
-                const icon = document.getElementById('toggleIcon');
-                report.classList.toggle('hidden');
-                icon.textContent = report.classList.contains('hidden') ? '▼' : '▲';
-            });
-            document.getElementById('searchBtn').addEventListener('click', () => {
-                const keyword = document.getElementById('searchInput').value.trim();
-                if (!keyword) return;
-                fuzzySearchPlayer(keyword);
-            });
-            document.getElementById('playerSelect').addEventListener('change', (e) => {
-                const playerName = e.target.value;
-                if (playerName) loadPlayerData(playerName);
-            });
-            // 回车搜索
-            document.getElementById('searchInput').addEventListener('keydown', (e) => {
-                if (e.key === 'Enter') document.getElementById('searchBtn').click();
-            });
+        // ===================== 工具函数 =====================
+        const debounce = (func, delay = 300) => {
+            let timer;
+            return (...args) => {
+                clearTimeout(timer);
+                timer = setTimeout(() => func.apply(this, args), delay);
+            };
         };
 
-        async function fetchRookies() {
-            try {
-                const res = await fetch(`${API_BASE}/api/rookies`);
-                if (!res.ok) throw new Error("获取新秀列表失败");
-                currentRookies = await res.json();
-                populatePlayerSelect();
-            } catch (e) {
-                console.error(e);
-                alert("无法连接后端，请检查FastAPI是否启动");
-            }
-        }
-
-        function populatePlayerSelect() {
-            const select = document.getElementById('playerSelect');
-            select.innerHTML = '<option value="">请选择球员</option>';
-            currentRookies.forEach(player => {
-                const option = document.createElement('option');
-                option.value = player.player_name;
-                option.textContent = `${player.player_name} | ${player.player_name_cn || player.player_name}`;
-                select.appendChild(option);
-            });
-        }
-
-        function fuzzySearchPlayer(keyword) {
-            if (!keyword) return;
-            const PLAYER_ALIAS_MAP = {
-                "文班亚马": "Victor Wembanyama", "文班": "Victor Wembanyama", "斑马": "Victor Wembanyama",
-                "班切罗": "Paolo Banchero", "保罗·班切罗": "Paolo Banchero",
-                "霍姆格伦": "Chet Holmgren", "切特·霍姆格伦": "Chet Holmgren",
-                "华子": "Anthony Edwards", "爱德华兹": "Anthony Edwards",
-                "杰伦格林": "Jalen Green", "格林": "Jalen Green"
-            };
-            const cleanKey = (key) => {
-                if (!key) return "";
-                key = key.replace("・", "·").replace(/\s+/g, "").replace("　", "");
-                key = key.toLowerCase().trim();
-                for (const [cnName, enName] of Object.entries(PLAYER_ALIAS_MAP)) {
-                    if (key.includes(cnName.toLowerCase().replace(/\s+/g, ""))) {
-                        return enName.toLowerCase().replace(/\s+/g, "");
-                    }
+        const animateNumber = (element, target, duration = 1500, isFloat = false) => {
+            let start = 0;
+            const increment = target / (duration / 16);
+            const updateNumber = () => {
+                start += increment;
+                if (start >= target) {
+                    element.textContent = isFloat ? target.toFixed(1) : Math.round(target);
+                    return;
                 }
-                return key;
+                element.textContent = isFloat ? start.toFixed(1) : Math.round(start);
+                requestAnimationFrame(updateNumber);
             };
-            const cleanInput = cleanKey(keyword);
-            const matched = currentRookies.find(player => {
-                const cleanEn = cleanKey(player.player_name);
-                const cleanCn = cleanKey(player.player_name_cn || "");
-                return cleanEn.includes(cleanInput) || cleanCn.includes(cleanInput);
-            });
-            if (matched) {
-                document.getElementById('playerSelect').value = matched.player_name;
-                loadPlayerData(matched.player_name);
-            } else {
-                alert("未找到匹配的球员");
+            requestAnimationFrame(updateNumber);
+        };
+
+        const showToast = (message, type = 'info') => {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+
+            const bgColors = {
+                info: 'bg-primary',
+                success: 'bg-emerald-600',
+                error: 'bg-red-600',
+                warning: 'bg-yellow-600'
+            };
+
+            toast.className = `toast ${bgColors[type]} text-white px-6 py-3 rounded-2xl shadow-lg`;
+            toast.innerHTML = `
+                <div class="flex items-center gap-3">
+                    <i class="fa ${type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-exclamation-circle' : type === 'warning' ? 'fa-exclamation-triangle' : 'fa-info-circle'} text-lg"></i>
+                    <span class="font-medium">${message}</span>
+                </div>
+            `;
+
+            container.appendChild(toast);
+            setTimeout(() => toast.classList.add('show'));
+
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => toast.remove(), 300);
+            }, 3500);
+        };
+
+        // ===================== 全局状态 =====================
+        let allPlayers = [];
+        let currentPlayer = null;
+        let favorites = JSON.parse(localStorage.getItem('nba-rookie-favorites')) || [];
+        let sortDirection = {};
+        let radarChart = null;
+
+        // ===================== 页面初始化 =====================
+        document.addEventListener('DOMContentLoaded', async () => {
+            await loadPlayersData();
+            initScrollAnimation();
+            initNavbarScroll();
+            initBackToTop();
+            initKeyboardShortcuts();
+            initFavorites();
+            initTableSort();
+            initPlayerComparison();
+            initSearchAutocomplete();
+            initPlayerSelect();
+        });
+
+        // ===================== 核心功能 =====================
+        async function loadPlayersData() {
+            try {
+                // 调用真实后端API
+                const response = await fetch('/api/rookies');
+                if (!response.ok) throw new Error('Failed to fetch rookies');
+                allPlayers = await response.json();
+
+                // 模拟加载延迟，展示骨架屏
+                await new Promise(resolve => setTimeout(resolve, 800));
+
+                updatePlayersTable();
+                updatePlayerSelects();
+
+                document.getElementById('skeleton-loader').classList.add('hidden');
+                document.getElementById('content').classList.remove('hidden');
+
+                showToast('数据加载成功', 'success');
+            } catch (error) {
+                console.error('加载失败:', error);
+                showToast('数据加载失败，请刷新重试', 'error');
             }
         }
 
-        async function loadPlayerData(playerName) {
-            if (!playerName) return;
-            const loadingDom = document.getElementById('loading');
-            loadingDom.classList.remove('hidden');
+        function updatePlayerSelects() {
+            const selects = ['player-select', 'compare-player1', 'compare-player2'];
+            selects.forEach(selectId => {
+                const select = document.getElementById(selectId);
+                select.innerHTML = '<option value="">选择球员</option>';
+                allPlayers.forEach(player => {
+                    const option = document.createElement('option');
+                    option.value = player.player_name;
+                    option.textContent = `${player.player_name_cn || player.player_name} | ${player.player_name}`;
+                    select.appendChild(option);
+                });
+            });
+        }
+
+        function initPlayerSelect() {
+            const select = document.getElementById('player-select');
+            select.addEventListener('change', async () => {
+                const playerName = select.value;
+                if (!playerName) {
+                    document.getElementById('prediction-card').classList.add('hidden');
+                    return;
+                }
+                await predictPlayer(playerName);
+            });
+        }
+
+        async function predictPlayer(playerName) {
             try {
-                const res = await fetch(`${API_BASE}/api/predict`, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
+                const response = await fetch('/api/predict', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ player_name: playerName })
                 });
-                if (!res.ok) {
-                    const errText = await res.text();
-                    throw new Error(`后端报错：${res.status} ${errText}`);
-                }
-                const data = await res.json();
-                if (!data || typeof data !== 'object') throw new Error("后端返回空数据");
+
+                if (!response.ok) throw new Error('Prediction failed');
+                const data = await response.json();
                 currentPlayer = data;
-                renderPredictionCards(data);
-                renderSimilarPlayers(data.similar_players);
-                renderMetrics(data);
-                renderRadarChart(data);
-                renderTrendChart(data);
-                renderReport(data);
-                loadingDom.classList.add('hidden');
-            } catch (err) {
-                console.error("预测错误：", err);
-                alert(`预测失败：${err.message}`);
-                loadingDom.classList.add('hidden');
+                renderPrediction(data);
+            } catch (error) {
+                console.error('预测失败:', error);
+                showToast('预测请求失败', 'error');
             }
         }
 
-                async function loadFeatureImportance() {
-            try {
-                const res = await fetch(`${API_BASE}/api/feature-importance`);
-                // 接口报错处理
-                if (!res.ok) {
-                    const errData = await res.json().catch(() => ({}));
-                    console.error("特征接口报错：", errData);
-                    document.getElementById('coreFeatureTip').textContent = `⚠️ 特征数据加载失败：${errData.detail || '接口异常'}`;
-                    return;
-                }
+        function renderPrediction(player) {
+            const card = document.getElementById('prediction-card');
+            card.classList.remove('hidden');
 
-                const data = await res.json();
-                // 空数据兜底
-                if (!data.top_features || data.top_features.length === 0) {
-                    document.getElementById('coreFeatureTip').textContent = `⚠️ 暂无特征重要性数据`;
-                    return;
-                }
+            // 更新基本信息
+            document.getElementById('player-name-cn').textContent = player.player_name_cn || player.player_name;
+            document.getElementById('player-name-en').textContent = player.player_name;
 
-                // 正常渲染核心特征提示
-                document.getElementById('coreFeatureTip').textContent = `💡 最核心的特征是：${data.core_feature}`;
-                // 渲染图表
-                renderFeatureChart(data.top_features);
-            } catch (e) {
-                console.error("特征重要性加载失败", e);
-                document.getElementById('coreFeatureTip').textContent = `⚠️ 特征数据加载失败，请检查后端服务`;
-            }
+            // 潜力评分圆环
+            const circle = document.getElementById('potential-circle');
+            circle.style.setProperty('--progress-value', `${player.potential_score}%`);
+            setTimeout(() => {
+                animateNumber(document.getElementById('potential-score'), player.potential_score);
+            }, 200);
+
+            // 预测类型
+            document.getElementById('pred-type').textContent = player.sub_type || player.pred_type;
+            setTimeout(() => {
+                animateNumber(document.getElementById('confidence'), (player.confidence * 100));
+            }, 400);
+
+            // 硬核指标
+            setTimeout(() => animateNumber(document.getElementById('newbie-age'), player.newbie_age), 600);
+            setTimeout(() => animateNumber(document.getElementById('early-avg-score'), player.early_avg_score, 1500, true), 800);
+            setTimeout(() => animateNumber(document.getElementById('durability'), player.durability), 1000);
+            setTimeout(() => animateNumber(document.getElementById('injury-risk'), player.injury_risk), 1200);
+
+            // 进阶数据
+            setTimeout(() => animateNumber(document.getElementById('per'), player.per, 1500, true), 1400);
+            setTimeout(() => animateNumber(document.getElementById('ts-percent'), (player.ts_percent * 100)), 1600);
+            setTimeout(() => animateNumber(document.getElementById('usg-percent'), (player.usg_percent * 100)), 1800);
+            setTimeout(() => animateNumber(document.getElementById('ws'), player.ws, 1500, true), 2000);
+
+            // 进度条
+            setTimeout(() => {
+                document.getElementById('per-bar').style.width = `${Math.min(player.per / 30 * 100, 100)}%`;
+                document.getElementById('ts-bar').style.width = `${player.ts_percent * 100}%`;
+                document.getElementById('usg-bar').style.width = `${Math.min(player.usg_percent * 100, 100)}%`;
+                document.getElementById('ws-bar').style.width = `${Math.min(player.ws / 15 * 100, 100)}%`;
+            }, 1400);
+
+            // 相似老将
+            renderSimilarPlayers(player.similar_players);
+
+            // 收藏按钮
+            updateFavoriteButton(player.player_name);
         }
 
-        function renderPredictionCards(data) {
-            if (!data) return;
-            document.getElementById('predType').textContent = data.pred_type;
-            document.getElementById('predConfidence').textContent = `置信度: ${(data.confidence * 100).toFixed(1)}%`;
-            const typeConfig = {
-                '稳定长青型': { desc: '生涯跨度长、状态稳定', color: 'text-secondary' },
-                '超长巅峰型': { desc: '生涯巅峰超10年，全明星级别', color: 'text-primary' },
-                '大器晚成型': { desc: '新秀期平平，后期爆发', color: 'text-info' },
-                '早衰型': { desc: '巅峰期较短或伤病影响', color: 'text-danger' },
-                '生涯波动型': { desc: '生涯起伏较大，不稳定', color: 'text-warning' },
-                '新秀期': { desc: '生涯初期，潜力待定', color: 'text-gray-300' }
-            };
-            const config = typeConfig[data.pred_type] || { desc: '未知类型', color: 'text-gray-300' };
-            document.getElementById('predType').className = `text-[clamp(2rem,5vw,3.5rem)] font-bold mb-2 ${config.color}`;
-            document.getElementById('predDesc').textContent = config.desc;
-            const note = data.career_length < 2
-                ? `注：生涯不足2年，数据样本极少，暂由规则标记为「新秀期」`
-                : `注：基于高阶特征与身体素质综合判定`;
-            document.getElementById('predNote').textContent = note;
-            document.getElementById('subType').textContent = data.sub_type || '未分类';
-            document.getElementById('potentialScore').textContent = (data.potential_score || 0).toFixed(1);
-            document.getElementById('playerPosition').textContent = data.player_position || '未知定位';
+        function renderSimilarPlayers(similarPlayers) {
+            const container = document.getElementById('similar-players');
+            container.innerHTML = '';
 
-            const similar = data.similar_players;
-            if (similar && similar.length >= 2) {
-                const typePriority = {
-                    '超长巅峰型': 4, '稳定长青型': 3, '大器晚成型': 2, '生涯波动型': 1, '早衰型': 0
-                };
-                const sorted = [...similar].sort((a, b) => {
-                    const aScore = typePriority[a.type] || 0;
-                    const bScore = typePriority[b.type] || 0;
-                    if (aScore !== bScore) return bScore - aScore;
-                    return b.score - a.score;
+            similarPlayers.forEach((veteran, index) => {
+                const card = document.createElement('div');
+                card.className = `bg-dark-card border border-dark-border rounded-3xl p-6 hover:border-primary/50 transition-all animate-on-scroll ${index % 3 === 0 ? 'animate-fade-in-delay-1' : index % 3 === 1 ? 'animate-fade-in-delay-2' : 'animate-fade-in-delay-3'}`;
+                card.innerHTML = `
+                    <div class="flex items-start justify-between mb-4">
+                        <div>
+                            <h4 class="text-xl font-bold">${veteran.name}</h4>
+                            <p class="text-primary">${veteran.type}</p>
+                        </div>
+                        ${veteran.similarity ? `<span class="text-dark-textMuted text-sm">相似度 ${veteran.similarity}%</span>` : ''}
+                    </div>
+                    <div class="grid grid-cols-3 gap-4 mb-4">
+                        <div class="text-center">
+                            <p class="text-2xl font-bold">${veteran.score.toFixed(1)}</p>
+                            <p class="text-dark-textMuted text-sm">新秀得分</p>
+                        </div>
+                        <div class="text-center">
+                            <p class="text-2xl font-bold">${veteran.career_length}</p>
+                            <p class="text-dark-textMuted text-sm">生涯长度</p>
+                        </div>
+                        <div class="text-center">
+                            <p class="text-2xl font-bold">${veteran.blk.toFixed(1)}</p>
+                            <p class="text-dark-textMuted text-sm">盖帽</p>
+                        </div>
+                    </div>
+                    <p class="text-dark-textMuted text-sm leading-relaxed">${veteran.report}</p>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function updatePlayersTable() {
+            const tbody = document.getElementById('players-table-body');
+            tbody.innerHTML = '';
+
+            allPlayers.forEach(player => {
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-dark-cardHover transition-colors cursor-pointer';
+                tr.innerHTML = `
+                    <td class="px-8 py-5 font-medium">${player.player_name_cn || player.player_name}</td>
+                    <td class="px-8 py-5 text-dark-textMuted">${player.player_position || '未知'}</td>
+                    <td class="px-8 py-5">${player.newbie_age || '-'}</td>
+                    <td class="px-8 py-5">${player.early_avg_score ? player.early_avg_score.toFixed(1) : '-'}</td>
+                    <td class="px-8 py-5">
+                        <span class="text-primary font-bold">${player.potential_score || '-'}</span>
+                    </td>
+                    <td class="px-8 py-5">
+                        <button class="table-favorite-btn p-2 hover:bg-dark-bg rounded-full transition-colors" data-name="${player.player_name}">
+                            <i class="fa ${favorites.includes(player.player_name) ? 'fa-star text-primary' : 'fa-star-o text-dark-textMuted'}"></i>
+                        </button>
+                    </td>
+                `;
+
+                // 点击行查看预测
+                tr.addEventListener('click', (e) => {
+                    if (!e.target.closest('.table-favorite-btn')) {
+                        document.getElementById('player-select').value = player.player_name;
+                        predictPlayer(player.player_name);
+                        document.getElementById('predict-result').scrollIntoView({ behavior: 'smooth' });
+                    }
                 });
-                const ceiling = sorted[0];
-                const floor = sorted[sorted.length - 1];
-                document.getElementById('ceilingPlayer').textContent = `${ceiling.name}（${ceiling.type}）`;
-                document.getElementById('ceilingDesc').textContent = `新秀场均${ceiling.score.toFixed(1)}分，生涯${ceiling.career_length}年`;
-                document.getElementById('floorPlayer').textContent = `${floor.name}（${floor.type}）`;
-                document.getElementById('floorDesc').textContent = `新秀场均${floor.score.toFixed(1)}分，生涯${floor.career_length}年`;
-            } else {
-                document.getElementById('ceilingPlayer').textContent = '--';
-                document.getElementById('ceilingDesc').textContent = '--';
-                document.getElementById('floorPlayer').textContent = '--';
-                document.getElementById('floorDesc').textContent = '--';
+
+                // 收藏按钮
+                tr.querySelector('.table-favorite-btn').addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    toggleFavorite(player.player_name);
+                    updatePlayersTable();
+                });
+
+                tbody.appendChild(tr);
+            });
+        }
+
+        function updateFavoriteButton(playerName) {
+            const btn = document.getElementById('favorite-player-btn');
+            const isFav = favorites.includes(playerName);
+            btn.innerHTML = `<i class="fa ${isFav ? 'fa-star text-primary' : 'fa-star-o text-dark-textMuted'} text-2xl"></i>`;
+            btn.onclick = () => {
+                toggleFavorite(playerName);
+                updateFavoriteButton(playerName);
+            };
+        }
+
+        // ===================== 功能初始化 =====================
+        function initScrollAnimation() {
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.style.opacity = '1';
+                        entry.target.style.transform = 'translateY(0)';
+                        entry.target.style.transition = 'opacity 0.6s ease-out, transform 0.6s ease-out';
+                    }
+                });
+            }, { threshold: 0.1 });
+
+            document.querySelectorAll('.animate-on-scroll').forEach(el => observer.observe(el));
+        }
+
+        function initNavbarScroll() {
+            const navbar = document.getElementById('navbar');
+            window.addEventListener('scroll', () => {
+                if (window.scrollY > 30) {
+                    navbar.classList.add('nav-scrolled');
+                } else {
+                    navbar.classList.remove('nav-scrolled');
+                }
+            });
+        }
+
+        function initBackToTop() {
+            const btn = document.getElementById('back-to-top');
+            window.addEventListener('scroll', () => {
+                if (window.scrollY > 500) {
+                    btn.classList.remove('opacity-0', 'invisible');
+                    btn.classList.add('opacity-100', 'visible');
+                } else {
+                    btn.classList.add('opacity-0', 'invisible');
+                    btn.classList.remove('opacity-100', 'visible');
+                }
+            });
+            btn.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
+        }
+
+        function initKeyboardShortcuts() {
+            const searchInput = document.getElementById('search-input');
+            document.addEventListener('keydown', (e) => {
+                if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT' || e.target.tagName === 'TEXTAREA') {
+                    if (e.key === 'Escape') {
+                        e.target.value = '';
+                        if (e.target === searchInput) updateSearchDropdown([]);
+                    }
+                    return;
+                }
+                if (e.key === '/' && !e.ctrlKey && !e.metaKey) {
+                    e.preventDefault();
+                    searchInput.focus();
+                }
+                if (e.key === 'Escape') {
+                    document.getElementById('favorites-modal').classList.add('hidden');
+                    document.getElementById('favorites-modal').classList.remove('flex');
+                }
+            });
+        }
+
+        function initFavorites() {
+            const btn = document.getElementById('favorites-btn');
+            const modal = document.getElementById('favorites-modal');
+            const closeBtn = document.getElementById('close-favorites');
+            const clearBtn = document.getElementById('clear-favorites');
+            const count = document.getElementById('favorites-count');
+
+            const updateCount = () => {
+                count.textContent = favorites.length;
+                localStorage.setItem('nba-rookie-favorites', JSON.stringify(favorites));
+                updateFavoritesList();
+            };
+
+            window.toggleFavorite = (name) => {
+                if (favorites.includes(name)) {
+                    favorites = favorites.filter(n => n !== name);
+                    showToast('已取消收藏', 'info');
+                } else {
+                    favorites.push(name);
+                    showToast('收藏成功', 'success');
+                }
+                updateCount();
+            };
+
+            function updateFavoritesList() {
+                const list = document.getElementById('favorites-list');
+                list.innerHTML = '';
+                if (favorites.length === 0) {
+                    list.innerHTML = '<p class="text-dark-textMuted text-center py-8">暂无收藏球员</p>';
+                    return;
+                }
+
+                favorites.forEach(name => {
+                    const player = allPlayers.find(p => p.player_name === name);
+                    const item = document.createElement('div');
+                    item.className = 'flex items-center justify-between p-4 bg-dark-bg rounded-2xl';
+                    item.innerHTML = `
+                        <div>
+                            <p class="font-medium">${player?.player_name_cn || name}</p>
+                            <p class="text-dark-textMuted text-sm">${player?.player_position || ''}</p>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <button class="view-fav-btn p-2 hover:bg-dark-card rounded-full transition-colors" data-name="${name}">
+                                <i class="fa fa-eye text-dark-textMuted"></i>
+                            </button>
+                            <button class="unfav-btn p-2 hover:bg-dark-card rounded-full transition-colors" data-name="${name}">
+                                <i class="fa fa-trash text-red-500"></i>
+                            </button>
+                        </div>
+                    `;
+                    list.appendChild(item);
+
+                    item.querySelector('.view-fav-btn').addEventListener('click', () => {
+                        document.getElementById('player-select').value = name;
+                        predictPlayer(name);
+                        modal.classList.add('hidden');
+                        modal.classList.remove('flex');
+                        document.getElementById('predict-result').scrollIntoView({ behavior: 'smooth' });
+                    });
+
+                    item.querySelector('.unfav-btn').addEventListener('click', () => {
+                        toggleFavorite(name);
+                        updatePlayersTable();
+                    });
+                });
             }
+
+            btn.addEventListener('click', () => {
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+                updateFavoritesList();
+            });
+
+            closeBtn.addEventListener('click', () => {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            });
+
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    modal.classList.add('hidden');
+                    modal.classList.remove('flex');
+                }
+            });
+
+            clearBtn.addEventListener('click', () => {
+                if (confirm('确定清空收藏？')) {
+                    favorites = [];
+                    updateCount();
+                    updatePlayersTable();
+                    showToast('收藏已清空', 'info');
+                }
+            });
+
+            updateCount();
         }
 
-        function renderSimilarPlayers(players) {
-            if (!players || players.length === 0) {
-                document.getElementById('similarPlayersTable').innerHTML = '<tr><td colspan="4" class="py-4 text-center text-gray-500">暂无数据</td></tr>';
-                document.getElementById('fullSimilarTable').innerHTML = '<tr><td colspan="8" class="py-6 text-center text-gray-500">暂无数据</td></tr>';
-                document.getElementById('similarReport').innerHTML = '<p class="text-gray-500 text-center">暂无数据</p>';
-                return;
-            }
-            let tableHtml = '';
-            players.forEach(p => {
-                tableHtml += `
-                <tr class="border-b border-gray-800">
-                    <td class="py-3 font-medium">${p.name}</td>
-                    <td class="py-3 text-primary">${p.type}</td>
-                    <td class="py-3">${p.score.toFixed(1)}</td>
-                    <td class="py-3">${p.career_length}年</td>
-                </tr>
-                `;
-            });
-            document.getElementById('similarPlayersTable').innerHTML = tableHtml;
+        function initTableSort() {
+            const headers = document.querySelectorAll('th[data-sort]');
+            headers.forEach(header => {
+                header.addEventListener('click', () => {
+                    const key = header.dataset.sort;
+                    sortDirection[key] = sortDirection[key] === 'asc' ? 'desc' : 'asc';
 
-            let fullTableHtml = '';
-            players.forEach(p => {
-                fullTableHtml += `
-                <tr class="border-b border-gray-800">
-                    <td class="py-3 font-medium">${p.name}</td>
-                    <td class="py-3 text-primary">${p.type}</td>
-                    <td class="py-3">${p.score.toFixed(1)}</td>
-                    <td class="py-3">${p.reb ? p.reb.toFixed(1) : '--'}</td>
-                    <td class="py-3">${p.ast ? p.ast.toFixed(1) : '--'}</td>
-                    <td class="py-3">${p.stl ? p.stl.toFixed(1) : '--'}</td>
-                    <td class="py-3">${p.blk ? p.blk.toFixed(1) : '--'}</td>
-                    <td class="py-3">${p.career_length}年</td>
-                </tr>
-                `;
-            });
-            document.getElementById('fullSimilarTable').innerHTML = fullTableHtml;
+                    headers.forEach(h => {
+                        const icon = h.querySelector('i');
+                        if (h.dataset.sort === key) {
+                            icon.className = `fa fa-sort-${sortDirection[key] === 'asc' ? 'asc' : 'desc'} ml-2 text-primary`;
+                        } else {
+                            icon.className = 'fa fa-sort ml-2 text-dark-textMuted';
+                        }
+                    });
 
-            let reportHtml = '';
-            players.forEach(p => {
-                reportHtml += `
-                <div class="bg-dark-300/50 rounded-lg p-3">
-                    <p class="font-medium text-white">${p.name}</p>
-                    <p class="text-sm text-gray-400 mt-1">${p.report || `${p.name} 职业生涯${p.career_length}年，新秀场均${p.score.toFixed(1)}分。`}</p>
-                </div>
-                `;
+                    allPlayers.sort((a, b) => {
+                        const valA = a[key];
+                        const valB = b[key];
+                        if (typeof valA === 'number' && typeof valB === 'number') {
+                            return sortDirection[key] === 'asc' ? valA - valB : valB - valA;
+                        }
+                        const strA = String(valA || '');
+                        const strB = String(valB || '');
+                        return sortDirection[key] === 'asc'
+                            ? strA.localeCompare(strB, 'zh-CN')
+                            : strB.localeCompare(strA, 'zh-CN');
+                    });
+
+                    updatePlayersTable();
+                });
             });
-            document.getElementById('similarReport').innerHTML = reportHtml;
         }
 
-        function renderMetrics(data) {
-            if (!data) return;
-            // 耐操度
-            const durability = data.durability || 0;
-            let durColor = '', durDesc = '';
-            if (durability >= 80) { durColor = 'text-primary'; durDesc = '健康/高耐操'; }
-            else if (durability >= 60) { durColor = 'text-warning'; durDesc = '中等耐操'; }
-            else { durColor = 'text-danger'; durDesc = '低耐操'; }
-            document.getElementById('durabilityValue').textContent = `${durability.toFixed(1)}%`;
-            document.getElementById('durabilityValue').className = `text-3xl font-bold mb-1 ${durColor}`;
-            document.getElementById('durabilityDesc').textContent = durDesc;
+        function initPlayerComparison() {
+            const select1 = document.getElementById('compare-player1');
+            const select2 = document.getElementById('compare-player2');
+            const view = document.getElementById('comparison-view');
 
-            // 伤病风险
-            const injuryRisk = data.injury_risk || 0;
-            let injColor = '', injDesc = '';
-            if (injuryRisk < 30) { injColor = 'text-primary'; injDesc = '低风险'; }
-            else if (injuryRisk < 60) { injColor = 'text-warning'; injDesc = '中风险'; }
-            else { injColor = 'text-danger'; injDesc = '高风险'; }
-            document.getElementById('injuryValue').textContent = injuryRisk.toFixed(1);
-            document.getElementById('injuryValue').className = `text-3xl font-bold mb-1 ${injColor}`;
-            document.getElementById('injuryDesc').textContent = injDesc;
+            const handleCompare = async () => {
+                const name1 = select1.value;
+                const name2 = select2.value;
+                if (!name1 || !name2) {
+                    view.classList.add('hidden');
+                    return;
+                }
 
-            // 出勤率
-            const attendance = data.durability || 0;
-            let attColor = '', attDesc = '';
-            if (attendance >= 80) { attColor = 'text-secondary'; attDesc = '高出勤'; }
-            else if (attendance >= 60) { attColor = 'text-gray-300'; attDesc = '中等出勤'; }
-            else { attColor = 'text-gray-400'; attDesc = '低出勤'; }
-            document.getElementById('attendanceValue').textContent = `${attendance.toFixed(1)}%`;
-            document.getElementById('attendanceValue').className = `text-3xl font-bold mb-1 ${attColor}`;
-            document.getElementById('attendanceDesc').textContent = attDesc;
+                view.classList.remove('hidden');
 
-            // 进入联盟年龄
-            const age = data.newbie_age || 0;
-            let ageColor = '', ageDesc = '';
-            if (age <= 19) { ageColor = 'text-secondary'; ageDesc = '跳级新秀'; }
-            else if (age >= 22) { ageColor = 'text-info'; ageDesc = '超龄新秀'; }
-            else { ageColor = 'text-warning'; ageDesc = '常规新秀'; }
-            document.getElementById('ageValue').textContent = `${age}岁`;
-            document.getElementById('ageValue').className = `text-3xl font-bold mb-1 ${ageColor}`;
-            document.getElementById('ageDesc').textContent = ageDesc;
+                // 获取两个球员的预测数据
+                const [data1, data2] = await Promise.all([
+                    fetch('/api/predict', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ player_name: name1 }) }).then(r => r.json()),
+                    fetch('/api/predict', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ player_name: name2 }) }).then(r => r.json())
+                ]);
+
+                generateRadarChart(data1, data2);
+                renderComparisonStats(data1, data2);
+            };
+
+            select1.addEventListener('change', handleCompare);
+            select2.addEventListener('change', handleCompare);
         }
 
-        function renderRadarChart(data) {
-            if (!data) return;
+        function generateRadarChart(p1, p2) {
+            const ctx = document.getElementById('radar-chart').getContext('2d');
             if (radarChart) radarChart.destroy();
-            const nbaRadarConfig = [
-                { key: 'per', label: 'PER效率值', min: 0, max: 35 },
-                { key: 'ts_percent', label: '真实命中率', min: 0.4, max: 0.75 },
-                { key: 'usg_percent', label: '使用率', min: 10, max: 40 },
-                { key: 'ws', label: '胜利贡献值', min: 0, max: 15 },
-                { key: 'ast', label: '助攻能力', min: 0, max: 12 },
-                { key: 'reb', label: '篮板能力', min: 0, max: 18 },
-            ];
-            const labels = [];
-            const normalizedData = [];
-            const rawData = [];
-            nbaRadarConfig.forEach(config => {
-                labels.push(config.label);
-                const rawValue = data[config.key] || ((config.min + config.max) / 2);
-                rawData.push(rawValue);
-                const normalized = ((rawValue - config.min) / (config.max - config.min)) * 100;
-                normalizedData.push(Math.max(0, Math.min(100, normalized)));
-            });
-            // 闭合雷达图
-            normalizedData.push(normalizedData[0]);
-            labels.push(labels[0]);
 
-            const ctx = document.getElementById('radarChart').getContext('2d');
-            Chart.defaults.color = '#9ca3af';
-            Chart.defaults.borderColor = '#374151';
+            const labels = ['PER', 'TS%', 'USG%', 'WS', 'AST', 'REB', 'STL', 'BLK'];
+            const normalize = (val, max) => Math.min((val / max) * 100, 100);
+
+            const data1 = [
+                normalize(p1.per, 30),
+                normalize(p1.ts_percent * 100, 70),
+                normalize(p1.usg_percent * 100, 40),
+                normalize(p1.ws, 20),
+                normalize(p1.ast, 10),
+                normalize(p1.reb, 15),
+                normalize(p1.stl, 3),
+                normalize(p1.blk, 5)
+            ];
+
+            const data2 = [
+                normalize(p2.per, 30),
+                normalize(p2.ts_percent * 100, 70),
+                normalize(p2.usg_percent * 100, 40),
+                normalize(p2.ws, 20),
+                normalize(p2.ast, 10),
+                normalize(p2.reb, 15),
+                normalize(p2.stl, 3),
+                normalize(p2.blk, 5)
+            ];
+
             radarChart = new Chart(ctx, {
                 type: 'radar',
                 data: {
-                    labels: labels,
-                    datasets: [{
-                        label: data.player_name_cn || data.player_name,
-                        data: normalizedData,
-                        backgroundColor: 'rgba(16, 185, 129, 0.25)',
-                        borderColor: 'rgb(16, 185, 129)',
-                        borderWidth: 3,
-                        pointBackgroundColor: 'rgb(16, 185, 129)',
-                        pointBorderColor: '#fff',
-                        pointRadius: 5,
-                        pointHoverRadius: 7
-                    }]
-                },
-                options: {
-                    scales: {
-                        r: {
-                            beginAtZero: true,
-                            max: 100,
-                            min: 0,
-                            ticks: { stepSize: 20, backdropColor: 'transparent', color: '#6b7280' },
-                            grid: { color: '#374151', lineWidth: 1 },
-                            angleLines: { color: '#374151', lineWidth: 1 },
-                            pointLabels: { color: '#f3f4f6', font: { size: 12, weight: '500' } }
-                        }
-                    },
-                    plugins: {
-                        legend: { labels: { color: '#f3f4f6', font: { size: 14, weight: 'bold' } } },
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    const index = context.dataIndex;
-                                    if (index >= rawData.length) return '';
-                                    const config = nbaRadarConfig[index];
-                                    const rawValue = rawData[index].toFixed(1);
-                                    return `${config.label}: ${rawValue}`;
-                                }
-                            },
-                            backgroundColor: '#1f2937',
-                            titleColor: '#fff',
-                            bodyColor: '#f3f4f6',
-                            borderColor: '#10b981',
-                            borderWidth: 1,
-                            padding: 10
-                        }
-                    },
-                    maintainAspectRatio: true
-                }
-            });
-        }
-
-        function renderTrendChart(data) {
-            if (!data) return;
-            if (trendChart) trendChart.destroy();
-            const positionCapMap = {
-                "内线蓝领型": 20, "3D角色型": 22, "第六人得分型": 26,
-                "组织控场型": 28, "核心持球型": 32, "球队基石型": 35,
-                "超长巅峰型": 34, "稳定长青型": 30, "大器晚成型": 28,
-                "生涯波动型": 26, "早衰型": 24, "新秀期": 22, "未知": 24
-            };
-            const scoreCap = positionCapMap[data.player_position] || positionCapMap[data.pred_type] || 24;
-            const baseScore = data.early_avg_score || 12;
-
-            // 历史得分（前3年）
-            let historyScores = [];
-            for (let i = 1; i <= 3; i++) {
-                let yearScore = data[`第${i}年得分`] || data[i === 1 ? '新秀赛季得分' : (i === 2 ? '第二年得分' : '第三年得分')];
-                if (!yearScore || isNaN(yearScore)) {
-                    yearScore = i === 1 ? baseScore : (i === 2 ? baseScore * 1.1 : baseScore * 1.15);
-                }
-                historyScores.push(Math.min(yearScore, scoreCap * 0.95));
-            }
-
-            // 预测未来7年得分
-            const futureYears = 7;
-            const allYears = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
-            const allScores = [...historyScores];
-            const peakYear = 6; // 巅峰期在第6年
-            const a = 0.15; // 抛物线系数
-            const b = 2 * a * peakYear;
-
-            for (let year = 4; year <= 10; year++) {
-                const relativeGrowth = -a * Math.pow(year - peakYear, 2) + b * (year - peakYear);
-                const base = historyScores[2];
-                let predictedScore = base + (relativeGrowth * 0.8);
-                // 限制上下限
-                predictedScore = Math.max(base * 0.8, Math.min(predictedScore, scoreCap));
-                // 巅峰后逐年下滑
-                if (year > peakYear + 1) {
-                    predictedScore = predictedScore * (1 - (year - peakYear - 1) * 0.02);
-                }
-                allScores.push(predictedScore);
-            }
-
-            // 拆分历史和预测数据（实现断点连接）
-            const historyData = [...allScores.slice(0, 3), null, null, null, null, null, null, null];
-            const predictData = [null, null, allScores[2], ...allScores.slice(3)];
-            const capData = Array(10).fill(scoreCap);
-
-            const ctx = document.getElementById('trendChart').getContext('2d');
-            trendChart = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: allYears,
+                    labels,
                     datasets: [
                         {
-                            label: '历史得分',
-                            data: historyData,
-                            borderColor: '#3b82f6',
-                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                            borderWidth: 4,
-                            tension: 0.3,
-                            fill: false,
-                            pointRadius: 7,
-                            pointHoverRadius: 9,
-                            pointBackgroundColor: '#3b82f6',
-                            pointBorderColor: '#fff',
-                            pointBorderWidth: 2
-                        },
-                        {
-                            label: '预测得分',
-                            data: predictData,
-                            borderColor: '#f59e0b',
-                            borderDash: [8, 4],
-                            borderWidth: 4,
-                            tension: 0.4,
-                            fill: false,
-                            pointRadius: 7,
-                            pointHoverRadius: 9,
-                            pointBackgroundColor: '#f59e0b',
-                            pointBorderColor: '#fff',
-                            pointBorderWidth: 2
-                        },
-                        {
-                            label: '得分上限',
-                            data: capData,
-                            borderColor: '#ef4444',
-                            borderDash: [3, 3],
+                            label: p1.player_name_cn || p1.player_name,
+                            data: data1,
+                            backgroundColor: 'rgba(16, 185, 129, 0.2)',
+                            borderColor: '#10b981',
                             borderWidth: 2,
-                            tension: 0,
-                            fill: false,
-                            pointRadius: 0,
-                            pointHoverRadius: 0
+                            pointBackgroundColor: '#10b981'
+                        },
+                        {
+                            label: p2.player_name_cn || p2.player_name,
+                            data: data2,
+                            backgroundColor: 'rgba(59, 130, 246, 0.2)',
+                            borderColor: '#3b82f6',
+                            borderWidth: 2,
+                            pointBackgroundColor: '#3b82f6'
                         }
                     ]
                 },
                 options: {
-                    scales: {
-                        y: {
-                            beginAtZero: false,
-                            min: Math.max(0, Math.min(...allScores) - 5),
-                            max: Math.max(scoreCap + 5, Math.max(...allScores) + 5),
-                            ticks: { color: '#9ca3af', font: { size: 12 } },
-                            grid: { color: '#374151', lineWidth: 1 },
-                            border: { color: '#4b5563' }
-                        },
-                        x: {
-                            ticks: { color: '#9ca3af', font: { size: 12 } },
-                            grid: { display: false },
-                            border: { color: '#4b5563' },
-                            title: { display: true, text: '生涯年份', color: '#d1d5db' }
-                        }
-                    },
-                    plugins: {
-                        legend: {
-                            position: 'top',
-                            labels: {
-                                color: '#f3f4f6',
-                                font: { size: 14, weight: '500' },
-                                padding: 20
-                            }
-                        },
-                        tooltip: {
-                            backgroundColor: '#1f2937',
-                            titleColor: '#fff',
-                            bodyColor: '#f3f4f6',
-                            borderColor: '#f59e0b',
-                            borderWidth: 1,
-                            padding: 12,
-                            cornerRadius: 8,
-                            callbacks: {
-                                label: function(context) {
-                                    const value = context.raw;
-                                    if (value === null) return '';
-                                    return `${context.dataset.label}: ${value.toFixed(1)} 分`;
-                                }
-                            }
-                        },
-                        annotation: {
-                            annotations: {
-                                peakLine: {
-                                    type: 'line',
-                                    xMin: peakYear,
-                                    xMax: peakYear,
-                                    borderColor: '#8b5cf6',
-                                    borderWidth: 2,
-                                    borderDash: [2, 2],
-                                    label: {
-                                        content: '预测巅峰',
-                                        display: true,
-                                        position: 'start',
-                                        color: '#8b5cf6'
-                                    }
-                                }
-                            }
-                        }
-                    },
-                    maintainAspectRatio: true,
-                    interaction: {
-                        intersect: false,
-                        mode: 'index'
-                    }
-                }
-            });
-        }
-
-                function renderFeatureChart(topFeatures) {
-            // 先销毁旧图表，避免重复渲染
-            if (featureChart) {
-                featureChart.destroy();
-                featureChart = null;
-            }
-
-            // 空数据兜底
-            if (!topFeatures || topFeatures.length === 0) {
-                document.getElementById('featureChart').parentElement.innerHTML = '<p class="text-center text-gray-500 py-20">暂无特征重要性数据</p>';
-                return;
-            }
-
-            const ctx = document.getElementById('featureChart').getContext('2d');
-            // 反转数据，让重要性最高的在顶部
-            const reversed = [...topFeatures].reverse();
-            // 修复核心bug：用item.feature 替代 item.name
-            const labels = reversed.map(item => item.feature);
-            const values = reversed.map(item => item.importance);
-
-            // 图表配置，适配暗黑风格
-            featureChart = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: '特征重要性',
-                        data: values,
-                        backgroundColor: function(context) {
-                            const value = context.raw;
-                            const maxValue = Math.max(...values);
-                            const alpha = Math.min(1, 0.4 + (value / maxValue) * 0.6);
-                            return `rgba(16, 185, 129, ${alpha})`;
-                        },
-                        borderColor: 'rgb(16, 185, 129)',
-                        borderWidth: 2,
-                        borderRadius: 8,
-                        borderSkipped: false
-                    }]
-                },
-                options: {
-                    indexAxis: 'y',
                     responsive: true,
                     maintainAspectRatio: false,
+                    plugins: { legend: { labels: { color: '#e5e7eb' } } },
                     scales: {
-                        x: {
-                            beginAtZero: true,
-                            ticks: {
-                                color: '#9ca3af',
-                                font: { size: 12 },
-                                backdropColor: 'transparent'
-                            },
-                            grid: { color: '#374151', lineWidth: 1 },
-                            border: { color: '#4b5563' }
-                        },
-                        y: {
-                            ticks: {
-                                color: '#f3f4f6',
-                                font: { size: 13, weight: '500' },
-                                backdropColor: 'transparent'
-                            },
-                            grid: { display: false },
-                            border: { color: '#4b5563' }
+                        r: {
+                            angleLines: { color: '#262626' },
+                            grid: { color: '#262626' },
+                            pointLabels: { color: '#9ca3af', font: { size: 12 } },
+                            ticks: { display: false },
+                            suggestedMin: 0,
+                            suggestedMax: 100
                         }
-                    },
-                    plugins: {
-                        legend: { display: false },
-                        tooltip: {
-                            backgroundColor: '#1f2937',
-                            titleColor: '#fff',
-                            bodyColor: '#f3f4f6',
-                            borderColor: '#10b981',
-                            borderWidth: 1,
-                            padding: 10,
-                            cornerRadius: 6,
-                            callbacks: {
-                                label: function(context) {
-                                    return `重要性: ${context.raw.toFixed(4)}`;
-                                }
-                            }
-                        }
-                    },
-                    animation: {
-                        duration: 1000,
-                        easing: 'easeOutQuart'
                     }
                 }
             });
         }
 
-        function renderReport(data) {
-            if (!data) {
-                document.getElementById('fullReport').innerHTML = '<p class="text-center text-gray-500">暂无预测报告</p>';
-                return;
-            }
+        function renderComparisonStats(p1, p2) {
+            const container = document.getElementById('comparison-stats');
+            const stats = [
+                { label: '潜力值', v1: p1.potential_score, v2: p2.potential_score, unit: '' },
+                { label: '预测置信度', v1: (p1.confidence * 100).toFixed(0), v2: (p2.confidence * 100).toFixed(0), unit: '%' },
+                { label: '早期得分', v1: p1.early_avg_score.toFixed(1), v2: p2.early_avg_score.toFixed(1), unit: '分' },
+                { label: 'PER', v1: p1.per.toFixed(1), v2: p2.per.toFixed(1), unit: '' },
+                { label: '真实命中率', v1: (p1.ts_percent * 100).toFixed(0), v2: (p2.ts_percent * 100).toFixed(0), unit: '%' }
+            ];
 
-            const playerName = data.player_name_cn || data.player_name;
-            const predType = data.pred_type;
-            const confidence = (data.confidence * 100).toFixed(1);
-            const potentialScore = (data.potential_score || 0).toFixed(1);
-            const position = data.player_position || '未知定位';
-            const durability = (data.durability || 0).toFixed(1);
-            const injuryRisk = (data.injury_risk || 0).toFixed(1);
-            const age = data.newbie_age || 0;
-
-            // 相似球员摘要
-            let similarSummary = '暂无相似历史球员参考。';
-            if (data.similar_players && data.similar_players.length > 0) {
-                const top3 = data.similar_players.slice(0, 3);
-                similarSummary = `最相似的3位历史球员为：${top3.map(p => `${p.name}（${p.type}，生涯${p.career_length}年）`).join('、')}。`;
-            }
-
-            const report = `
-                <div class="space-y-4">
-                    <p><strong class="text-primary">一、基础信息</strong></p>
-                    <p>球员姓名：${playerName}，技术定位：${position}，进入联盟年龄：${age}岁。</p>
-
-                    <p class="mt-4"><strong class="text-primary">二、核心预测结果</strong></p>
-                    <p>1. 生涯类型预测：${predType}（置信度${confidence}%），生涯潜力评分为${potentialScore}分（满分10分）。</p>
-                    <p>2. 耐操度（出勤率）：${durability}%，伤病风险评分：${injuryRisk}分（越低越安全）。</p>
-
-                    <p class="mt-4"><strong class="text-primary">三、发展参考</strong></p>
-                    <p>${similarSummary}</p>
-                    <p>上限发展模板：${document.getElementById('ceilingPlayer').textContent || '暂无'}，下限发展模板：${document.getElementById('floorPlayer').textContent || '暂无'}。</p>
-
-                    <p class="mt-4"><strong class="text-primary">四、补充说明</strong></p>
-                    <p>本预测基于XGBoost模型结合NBA历史老将数据训练得出，核心参考特征为${document.getElementById('coreFeatureTip').textContent.replace('💡 最核心的特征是：', '')}。</p>
-                    <p>预测结果仅作参考，球员实际发展受训练、伤病、战术地位等多重因素影响。</p>
+            container.innerHTML = `
+                <div class="grid grid-cols-3 gap-4 text-center mb-6">
+                    <div class="text-primary font-bold text-lg">${p1.player_name_cn || p1.player_name}</div>
+                    <div class="text-dark-textMuted">对比</div>
+                    <div class="text-secondary font-bold text-lg">${p2.player_name_cn || p2.player_name}</div>
                 </div>
+                ${stats.map(s => `
+                    <div class="space-y-2">
+                        <div class="flex justify-between text-sm text-dark-textMuted">
+                            <span>${s.v1}${s.unit}</span>
+                            <span>${s.label}</span>
+                            <span>${s.v2}${s.unit}</span>
+                        </div>
+                        <div class="flex h-3 rounded-full overflow-hidden">
+                            <div class="bg-primary" style="width: ${Math.min((s.v1 / (parseFloat(s.v1) + parseFloat(s.v2))) * 100, 100)}%"></div>
+                            <div class="bg-secondary" style="width: ${Math.min((s.v2 / (parseFloat(s.v1) + parseFloat(s.v2))) * 100, 100)}%"></div>
+                        </div>
+                    </div>
+                `).join('')}
             `;
+        }
 
-            document.getElementById('fullReport').innerHTML = report;
+        function initSearchAutocomplete() {
+            const input = document.getElementById('search-input');
+            const dropdown = document.getElementById('autocomplete-dropdown');
+            const list = document.getElementById('dropdown-list');
+            const searchBtn = document.getElementById('search-btn');
+
+            const updateDropdown = (matches) => {
+                list.innerHTML = '';
+                if (!input.value.trim() || matches.length === 0) {
+                    dropdown.classList.remove('show');
+                    return;
+                }
+
+                matches.forEach(player => {
+                    const li = document.createElement('li');
+                    li.className = 'px-6 py-4 hover:bg-dark-cardHover cursor-pointer transition-colors';
+                    li.innerHTML = `
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="font-medium">${player.player_name_cn || player.player_name}</p>
+                                <p class="text-dark-textMuted text-sm">${player.player_name}</p>
+                            </div>
+                            <span class="text-primary text-sm">${player.player_position || ''}</span>
+                        </div>
+                    `;
+                    li.addEventListener('click', () => {
+                        input.value = player.player_name_cn || player.player_name;
+                        dropdown.classList.remove('show');
+                        document.getElementById('player-select').value = player.player_name;
+                        predictPlayer(player.player_name);
+                        document.getElementById('predict-result').scrollIntoView({ behavior: 'smooth' });
+                    });
+                    list.appendChild(li);
+                });
+
+                dropdown.classList.add('show');
+            };
+
+            const handleSearch = debounce(() => {
+                const q = input.value.trim().toLowerCase();
+                if (!q) {
+                    updateDropdown([]);
+                    return;
+                }
+                const matches = allPlayers.filter(p =>
+                    (p.player_name_cn && p.player_name_cn.toLowerCase().includes(q)) ||
+                    p.player_name.toLowerCase().includes(q)
+                );
+                updateDropdown(matches);
+            }, 200);
+
+            input.addEventListener('input', handleSearch);
+
+            searchBtn.addEventListener('click', () => {
+                const q = input.value.trim();
+                if (!q) return;
+                const match = allPlayers.find(p =>
+                    (p.player_name_cn && p.player_name_cn === q) || p.player_name === q
+                );
+                if (match) {
+                    document.getElementById('player-select').value = match.player_name;
+                    predictPlayer(match.player_name);
+                    document.getElementById('predict-result').scrollIntoView({ behavior: 'smooth' });
+                } else {
+                    showToast('未找到该球员', 'warning');
+                }
+            });
+
+            input.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') searchBtn.click();
+            });
+
+            document.addEventListener('click', (e) => {
+                if (!input.contains(e.target) && !dropdown.contains(e.target)) {
+                    dropdown.classList.remove('show');
+                }
+            });
         }
     </script>
 </body>

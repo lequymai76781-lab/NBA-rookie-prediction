@@ -13,7 +13,6 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.metrics.pairwise import cosine_similarity
 import json
 from contextlib import asynccontextmanager
-
 # ====================== 全局配置 ======================
 # 中文映射，一劳永逸
 PLAYER_CN_MAP = {
@@ -39,7 +38,6 @@ ROOKIE_THRESHOLD = 3  # 新秀看三年
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 # 前端页面路径（你的index.html和main.py在同一个文件夹里）
 INDEX_HTML_PATH = os.path.join(BASE_DIR, "index.html")
-
 # ====================== 全局资源变量 ======================
 model = None
 le = None
@@ -47,7 +45,6 @@ feature_cols = None
 preprocessor = None
 rookie_df = None
 veteran_df = None
-
 # ====================== 解决NaN序列化问题 ======================
 class NanSafeJSONResponse(JSONResponse):
     def render(self, content: Any) -> bytes:
@@ -67,7 +64,6 @@ class NanSafeJSONResponse(JSONResponse):
         return json.dumps(
             replace_nan(content), ensure_ascii=False, separators=(",", ":")
         ).encode("utf-8")
-
 # ====================== 生命周期：启动时加载模型和数据 ======================
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -101,7 +97,6 @@ async def lifespan(app: FastAPI):
         raise e
     yield
     print("👋 服务已关闭")
-
 # ====================== 初始化FastAPI应用 ======================
 app = FastAPI(
     title="NBA新秀潜力预测系统",
@@ -111,19 +106,21 @@ app = FastAPI(
     docs_url="/docs",
     redoc_url=None
 )
-
 # ====================== 根路径接口，放在API接口之前 ======================
 @app.get("/", summary="前端首页", description="访问根路径直接打开预测页面")
 async def root():
     if not os.path.exists(INDEX_HTML_PATH):
         raise HTTPException(status_code=404, detail="前端页面index.html不存在，请确保文件和main.py在同一文件夹")
     return FileResponse(INDEX_HTML_PATH)
-
-# ====================== CORS跨域配置 ======================
+# ====================== CORS跨域配置（已修复，适配Replit） ======================
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-        "https://1d5fa9ef-96f2-4f2d-ba65-13bde9f8bb73-00-qrkqiw6y6k4y.pike.replit.dev",
+        "https://nba-rookie-prediction-4--lequymai76781.replit.app",
+        "https://*.replit.app",
+        "https://*.replit.dev",
+        "http://localhost:8000",
+        "http://127.0.0.1:8000",
         "http://localhost:5000",
         "http://127.0.0.1:5000"
     ],
@@ -132,10 +129,8 @@ app.add_middleware(
     allow_headers=["*"],
     max_age=86400,
 )
-
 # ====================== 静态文件挂载（如果有css/js/图片，取消下面注释即可） ======================
 # app.mount("/static", StaticFiles(directory=os.path.join(BASE_DIR, "static")), name="static")
-
 # ====================== 辅助函数 ======================
 def clean_search_key(key: str) -> str:
     if not isinstance(key, str):
@@ -146,7 +141,6 @@ def clean_search_key(key: str) -> str:
         if key in cn_name.lower().replace(" ", ""):
             return en_name.lower().replace(" ", "")
     return key
-
 def calculate_similar_players(rookie_row, top_n=5):
     player_name_lower = str(rookie_row.get('player_name', '')).lower()
     # 文班亚马专属模板
@@ -196,16 +190,13 @@ def calculate_similar_players(rookie_row, top_n=5):
                               f"{row.get('player_name', '未知')} 职业生涯{row.get('生涯长度', 0)}年，新秀场均{row.get('rookie_avg_score', 0):.1f}分。")
         })
     return similar
-
 # ====================== 请求模型 ======================
 class PredictRequest(BaseModel):
     player_name: str
-
 # ====================== 所有API接口 ======================
 @app.get("/api/rookies", summary="获取新秀列表")
 async def get_rookies():
     return rookie_df.to_dict(orient="records")
-
 @app.post("/api/predict", summary="核心预测接口")
 async def predict_career(request: PredictRequest):
     input_name = request.player_name.strip()
@@ -254,7 +245,6 @@ async def predict_career(request: PredictRequest):
         "stl": float(rookie_row.get("早期抢断", rookie_row.get("STL", 0.8))),
         "blk": float(rookie_row.get("早期盖帽", rookie_row.get("BLK", 1.2)))
     }
-
 @app.get("/api/feature-importance", summary="获取特征重要性")
 async def get_feature_importance():
     try:
@@ -275,10 +265,14 @@ async def get_feature_importance():
     except Exception as e:
         print(f"特征重要性接口错误：{str(e)}")
         raise HTTPException(status_code=500, detail=f"获取特征重要性失败：{str(e)}")
-
 @app.get("/api/health", summary="健康检查")
 async def health_check():
     return {"status": "ok", "message": "NBA新秀潜力预测 API 运行正常"}
 
-# host必须是0.0.0.0，不然外网访问不到
-uvicorn main:app --host 0.0.0.0 --port 5000 --reload
+# ====================== 正确的服务启动代码（适配Replit） ======================
+import os
+if __name__ == "__main__":
+    import uvicorn
+    # Replit会自动分配PORT环境变量，优先使用系统分配的端口
+    port = int(os.environ.get("PORT", 8000))
+    uvicorn.run("main:app", host="0.0.0.0", port=port, reload=True)
