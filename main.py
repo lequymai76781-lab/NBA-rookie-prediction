@@ -22,6 +22,9 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 INDEX_HTML_PATH = os.path.join(BASE_DIR, "index.html")
 STATIC_DIR = os.path.join(BASE_DIR, "static")
 RUNTIME_DIR = os.path.join(BASE_DIR, "runtime_assets")
+if not os.path.isdir(RUNTIME_DIR):
+    print(f"警告：未找到 runtime_assets，回退到项目根目录: {BASE_DIR}")
+    RUNTIME_DIR = BASE_DIR
 PLOTS_DIR = os.path.join(BASE_DIR, "plots")
 
 PLAYER_CN_MAP = {
@@ -733,5 +736,5 @@ async def get_feature_importance():
 
 if __name__ == "__main__":
     import uvicorn
-    port = int(os.environ.get("PORT", 5000))
-    uvicorn.run("main:app", host="0.0.0.0", port=port, reload=False, log_level="info")
+    port = int(os.environ.get("PORT", 8000))
+    uvicorn.run("main:app", host="0.0.0.0", port=port, reload=True, log_level="info")
