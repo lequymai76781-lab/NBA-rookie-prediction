@@ -1,947 +1,1110 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>NBA新秀球员分析系统</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" />
-    <style>
-        :root {
-            --primary: #10b981;
-            --primary-dark: #059669;
-            --primary-light: #34d399;
-            --bg-dark: #0b1220;
-            --card-dark: rgba(15, 23, 42, 0.88);
-            --card-hover: rgba(30, 41, 59, 0.92);
-            --border: rgba(255,255,255,0.08);
-            --text: #f8fafc;
-            --text-muted: #94a3b8;
-            --shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
-        }
-        * { box-sizing: border-box; }
-        body {
-            margin: 0;
-            color: var(--text);
-            font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
-            background:
-                radial-gradient(circle at top left, rgba(16,185,129,0.18), transparent 30%),
-                radial-gradient(circle at bottom right, rgba(52,211,153,0.12), transparent 30%),
-                linear-gradient(180deg, #061019 0%, #0b1220 100%);
-            min-height: 100vh;
-            overflow-x: hidden;
-        }
-        .glass {
-            background: var(--card-dark);
-            border: 1px solid var(--border);
-            box-shadow: var(--shadow);
-            backdrop-filter: blur(16px);
-        }
-        .gradient-text {
-            background: linear-gradient(135deg, #10b981 0%, #5eead4 100%);
-            -webkit-background-clip: text;
-            background-clip: text;
-            color: transparent;
-        }
-        .btn-active { transition: all .25s ease; }
-        .btn-active:hover { transform: translateY(-2px); }
-        .card-hover { transition: all .28s ease; }
-        .card-hover:hover {
-            transform: translateY(-6px);
-            border-color: rgba(16,185,129,0.3);
-            box-shadow: 0 25px 70px rgba(16,185,129,0.12);
-        }
-        .screen-enter { animation: screenFadeIn .7s ease-out both; }
-        @keyframes screenFadeIn {
-            from { opacity: 0; transform: translateY(16px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        .toast { animation: fadeUp .25s ease both; }
-        @keyframes fadeUp {
-            from { opacity: 0; transform: translateY(8px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        .ring {
-            width: 126px;
-            height: 126px;
-            border-radius: 9999px;
-            display: grid;
-            place-items: center;
-            background:
-              radial-gradient(closest-side, rgba(11,18,32,1) 78%, transparent 79% 100%),
-              conic-gradient(var(--primary) calc(var(--pct) * 1%), rgba(255,255,255,0.08) 0);
-        }
-        .feature-bar {
-            height: 10px;
-            border-radius: 9999px;
-            background: rgba(255,255,255,0.06);
-            overflow: hidden;
-        }
-        .feature-bar > span {
-            display: block;
-            height: 100%;
-            border-radius: 9999px;
-            background: linear-gradient(90deg, #10b981, #34d399);
-        }
-        .mini-chip {
-            border: 1px solid rgba(255,255,255,0.1);
-            background: rgba(255,255,255,0.04);
-        }
-        .table-scroll::-webkit-scrollbar { width: 10px; height: 10px; }
-        .table-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 9999px; }
-        .table-scroll::-webkit-scrollbar-track { background: transparent; }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NBA新秀球员分析系统</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    :root {
+      --bg-1: #020817;
+      --bg-2: #031525;
+      --panel: rgba(10, 22, 41, 0.78);
+      --panel-strong: rgba(8, 18, 35, 0.92);
+      --border: rgba(148, 163, 184, 0.14);
+      --text: #e5eefc;
+      --muted: #8ba0bf;
+      --primary: #10b981;
+      --primary-soft: rgba(16, 185, 129, 0.12);
+      --blue: #3b82f6;
+      --shadow: 0 18px 60px rgba(0, 0, 0, 0.28);
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--text);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+      background:
+        radial-gradient(circle at 20% 20%, rgba(16,185,129,0.10), transparent 28%),
+        radial-gradient(circle at 80% 30%, rgba(59,130,246,0.10), transparent 30%),
+        radial-gradient(circle at 50% 85%, rgba(16,185,129,0.06), transparent 35%),
+        linear-gradient(180deg, var(--bg-2) 0%, var(--bg-1) 55%, #010611 100%);
+      overflow-x: hidden;
+    }
+
+    #bg-particles {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+      pointer-events: none;
+      opacity: 0.55;
+    }
+
+    .app-shell,
+    .page-shell,
+    .main-content,
+    header,
+    nav,
+    section,
+    main,
+    footer {
+      position: relative;
+      z-index: 1;
+    }
+
+    .glass {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      backdrop-filter: blur(18px);
+      box-shadow: var(--shadow);
+    }
+    .glass-strong {
+      background: var(--panel-strong);
+      border: 1px solid var(--border);
+      backdrop-filter: blur(22px);
+      box-shadow: var(--shadow);
+    }
+    .chip {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      backdrop-filter: blur(10px);
+    }
+    .text-gradient {
+      background: linear-gradient(135deg, #a7f3d0 0%, #34d399 35%, #60a5fa 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+    .card-hover {
+      transition: transform .28s ease, border-color .28s ease, box-shadow .28s ease;
+    }
+    .card-hover:hover {
+      transform: translateY(-6px);
+      border-color: rgba(16, 185, 129, 0.35);
+      box-shadow: 0 24px 70px rgba(16, 185, 129, 0.10);
+    }
+    .hidden-screen { display: none !important; }
+    .fade-up {
+      animation: fadeUp .5s ease both;
+    }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .feature-bar {
+      height: 10px;
+      border-radius: 9999px;
+      overflow: hidden;
+      background: rgba(255,255,255,0.06);
+    }
+    .feature-bar span {
+      display: block;
+      height: 100%;
+      border-radius: 9999px;
+      background: linear-gradient(90deg, #10b981, #34d399);
+    }
+
+    .ring {
+      width: 120px;
+      height: 120px;
+      border-radius: 9999px;
+      display: grid;
+      place-items: center;
+      background:
+        radial-gradient(closest-side, rgba(6,12,24,1) 78%, transparent 79% 100%),
+        conic-gradient(var(--primary) calc(var(--pct) * 1%), rgba(255,255,255,0.08) 0);
+    }
+
+    .metric-card {
+      min-height: 118px;
+    }
+
+    .toast {
+      animation: fadeUp .25s ease both;
+    }
+
+    .input-dark, .select-dark {
+      width: 100%;
+      background: rgba(2, 6, 23, 0.35);
+      color: var(--text);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 18px;
+      padding: 14px 16px;
+      outline: none;
+      transition: border-color .2s ease, box-shadow .2s ease;
+    }
+    .input-dark:focus, .select-dark:focus {
+      border-color: rgba(16,185,129,0.55);
+      box-shadow: 0 0 0 4px rgba(16,185,129,0.10);
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #10b981, #059669);
+      color: white;
+      border: 1px solid rgba(16,185,129,0.28);
+    }
+    .btn-primary:hover { filter: brightness(1.06); }
+    .btn-secondary {
+      background: rgba(255,255,255,0.04);
+      color: white;
+      border: 1px solid rgba(255,255,255,0.10);
+    }
+    .btn-secondary:hover { background: rgba(255,255,255,0.07); }
+
+    .btn {
+      border-radius: 9999px;
+      padding: 12px 20px;
+      font-weight: 700;
+      transition: all .2s ease;
+    }
+
+    .similar-card p, .report-text, .rule-text {
+      line-height: 1.85;
+    }
+
+    .modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 50;
+      background: rgba(0,0,0,0.5);
+      backdrop-filter: blur(8px);
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .modal.show { display: flex; }
+
+    @media (max-width: 768px) {
+      .ring { width: 96px; height: 96px; }
+    }
+  </style>
 </head>
 <body>
-    <header class="sticky top-0 z-40 border-b border-white/5 bg-slate-950/50 backdrop-blur-xl">
-        <div class="max-w-7xl mx-auto px-4 md:px-6 h-16 flex items-center justify-between">
-            <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-2xl bg-emerald-500/15 text-emerald-400 flex items-center justify-center">
-                    <i class="fa fa-line-chart"></i>
-                </div>
-                <div>
-                    <div class="font-black tracking-wide">NBA新秀球员分析系统</div>
-                    <div class="text-xs text-slate-400">Supabase 风格 · 动态联动版</div>
-                </div>
-            </div>
-            <div class="flex items-center gap-3 text-sm">
-                <button id="favorites-btn" class="px-4 py-2 rounded-full mini-chip btn-active">
-                    <i class="fa fa-star mr-1"></i> 收藏 <span id="favorites-count">0</span>
-                </button>
-                <button id="guide-btn" class="px-4 py-2 rounded-full mini-chip btn-active">
-                    <i class="fa fa-book mr-1"></i> 说明
-                </button>
-            </div>
+  <canvas id="bg-particles"></canvas>
+
+  <div class="app-shell min-h-screen">
+    <header class="sticky top-0 z-20 border-b border-white/5 backdrop-blur-xl bg-slate-950/55">
+      <div class="max-w-7xl mx-auto px-4 md:px-6 py-4 flex items-center justify-between gap-4">
+        <div class="flex items-center gap-3">
+          <div class="w-12 h-12 rounded-2xl bg-emerald-500/15 border border-emerald-400/20 flex items-center justify-center text-2xl">📈</div>
+          <div>
+            <div class="text-2xl font-black">NBA新秀球员分析系统</div>
+            <div class="text-sm text-slate-400">Supabase 风格 · 动态联动版</div>
+          </div>
         </div>
+        <div class="flex items-center gap-3">
+          <button id="favoritesBtn" class="btn btn-secondary">⭐ 收藏 <span id="favoritesCount">0</span></button>
+          <button id="guideBtn" class="btn btn-secondary">📘 说明</button>
+        </div>
+      </div>
     </header>
 
-    <!-- 开场页 -->
-    <section id="landing-screen" class="min-h-screen flex items-center justify-center px-6 relative overflow-hidden">
-        <div class="absolute inset-0 pointer-events-none">
-            <div class="absolute top-20 left-10 w-80 h-80 bg-emerald-500/20 blur-3xl rounded-full animate-pulse"></div>
-            <div class="absolute bottom-10 right-10 w-96 h-96 bg-teal-400/15 blur-3xl rounded-full animate-pulse"></div>
+    <section id="landingScreen" class="min-h-[calc(100vh-80px)] flex items-center justify-center px-6 py-16 fade-up">
+      <div class="max-w-6xl mx-auto text-center">
+        <div class="inline-flex items-center gap-2 chip rounded-full px-4 py-2 text-sm text-emerald-300 mb-6">
+          <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+          基于新秀递进窗口的动态发展预测系统
         </div>
-        <div class="relative z-10 max-w-5xl mx-auto text-center screen-enter">
-            <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full mini-chip text-emerald-400 mb-6">
-                <i class="fa fa-bolt"></i>
-                <span>动态递进式预测系统</span>
-            </div>
-            <h1 class="text-5xl md:text-7xl font-black leading-tight gradient-text mb-6">NBA新秀球员分析系统</h1>
-            <p class="text-lg md:text-2xl text-slate-300 max-w-3xl mx-auto leading-relaxed mb-10">
-                从新秀首年观察，到三年正式预测。<br>
-                用动态数据、规则画像、SHAP 解释和历史模板，给球队一个真正能用的判断系统。
-            </p>
-            <div class="flex flex-col sm:flex-row gap-4 justify-center items-center">
-                <button id="enter-system-btn" class="px-8 py-4 rounded-full bg-emerald-500 text-white hover:bg-emerald-400 transition-all font-bold text-lg btn-active shadow-2xl">
-                    <i class="fa fa-rocket mr-2"></i>进入系统
-                </button>
-                <button id="open-guide-from-landing" class="px-8 py-4 rounded-full border border-white/10 bg-slate-900/40 hover:bg-slate-900/70 transition-all font-medium btn-active">
-                    <i class="fa fa-book mr-2"></i>查看说明
-                </button>
-            </div>
+        <h1 class="text-5xl md:text-7xl font-black leading-tight text-gradient mb-6">NBA 新秀未来发展趋势预测</h1>
+        <p class="max-w-3xl mx-auto text-lg md:text-2xl text-slate-300 leading-9 mb-10">
+          从首年观察，到第二年趋势判断，再到第三年正式预测。<br>
+          用规则画像、两阶段模型、SHAP解释与历史模板，构建真正可展示、可分析、可落地的比赛作品页面。
+        </p>
+        <div class="flex flex-col sm:flex-row gap-4 justify-center">
+          <button id="enterSystemBtn" class="btn btn-primary text-lg px-8 py-4">🚀 进入系统</button>
+          <button id="showGuideLandingBtn" class="btn btn-secondary text-lg px-8 py-4">查看使用说明</button>
         </div>
+      </div>
     </section>
 
-    <!-- 功能大厅 -->
-    <section id="feature-hub" class="hidden min-h-screen px-6 py-24">
-        <div class="max-w-7xl mx-auto screen-enter">
-            <div class="text-center mb-12">
-                <h2 class="text-4xl md:text-5xl font-black gradient-text mb-4">功能大厅</h2>
-                <p class="text-slate-400 text-lg">先选择你想进入的模块，再进入对应页面</p>
-            </div>
-            <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
-                <button class="module-card glass rounded-3xl p-8 text-left card-hover btn-active" data-module="predict">
-                    <div class="w-14 h-14 rounded-2xl bg-emerald-500/15 text-emerald-400 flex items-center justify-center mb-5"><i class="fa fa-search text-2xl"></i></div>
-                    <h3 class="text-2xl font-bold mb-3">球员预测</h3>
-                    <p class="text-slate-400 leading-7">搜索球员，查看阶段、一级结果、规则画像、历史模板与报告。</p>
-                </button>
-                <button class="module-card glass rounded-3xl p-8 text-left card-hover btn-active" data-module="compare">
-                    <div class="w-14 h-14 rounded-2xl bg-blue-500/15 text-blue-400 flex items-center justify-center mb-5"><i class="fa fa-balance-scale text-2xl"></i></div>
-                    <h3 class="text-2xl font-bold mb-3">球员对比</h3>
-                    <p class="text-slate-400 leading-7">选两名球员，动态比较画像、发展趋势和核心指标。</p>
-                </button>
-                <button class="module-card glass rounded-3xl p-8 text-left card-hover btn-active" data-module="favorites">
-                    <div class="w-14 h-14 rounded-2xl bg-yellow-500/15 text-yellow-400 flex items-center justify-center mb-5"><i class="fa fa-star text-2xl"></i></div>
-                    <h3 class="text-2xl font-bold mb-3">我的收藏</h3>
-                    <p class="text-slate-400 leading-7">保存球员，建立自己的研究样本库，快速进入详情页。</p>
-                </button>
-                <button class="module-card glass rounded-3xl p-8 text-left card-hover btn-active" data-module="insight">
-                    <div class="w-14 h-14 rounded-2xl bg-purple-500/15 text-purple-400 flex items-center justify-center mb-5"><i class="fa fa-line-chart text-2xl"></i></div>
-                    <h3 class="text-2xl font-bold mb-3">SHAP洞察</h3>
-                    <p class="text-slate-400 leading-7">查看一级主结果的全局特征重要性与可解释性分析。</p>
-                </button>
-            </div>
-            <div class="text-center mt-12">
-                <button id="back-to-landing-btn" class="px-6 py-3 rounded-full mini-chip btn-active">
-                    <i class="fa fa-arrow-left mr-2"></i>返回开场页
-                </button>
-            </div>
+    <section id="featureHub" class="hidden-screen px-6 py-16 fade-up">
+      <div class="max-w-7xl mx-auto">
+        <div class="text-center mb-12">
+          <div class="text-sm text-slate-400 mb-3">功能大厅</div>
+          <h2 class="text-4xl md:text-5xl font-black text-gradient mb-4">选择一个模块进入</h2>
+          <p class="text-lg text-slate-300">不再一进来就把所有内容摊开，而是先进入大厅，再进入对应工作区。</p>
         </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+          <button class="glass-strong rounded-3xl p-8 text-left card-hover module-card" data-module="predict">
+            <div class="w-14 h-14 rounded-2xl bg-emerald-500/15 border border-emerald-400/20 flex items-center justify-center text-2xl mb-5">🔍</div>
+            <h3 class="text-2xl font-bold mb-3">球员预测</h3>
+            <p class="text-slate-400 leading-8">搜索球员、加载一级结果、规则画像、历史模板、SHAP与报告。</p>
+          </button>
+          <button class="glass-strong rounded-3xl p-8 text-left card-hover module-card" data-module="compare">
+            <div class="w-14 h-14 rounded-2xl bg-blue-500/15 border border-blue-400/20 flex items-center justify-center text-2xl mb-5">⚖️</div>
+            <h3 class="text-2xl font-bold mb-3">球员对比</h3>
+            <p class="text-slate-400 leading-8">选两名球员，直接进入对比页，看趋势与画像差异。</p>
+          </button>
+          <button class="glass-strong rounded-3xl p-8 text-left card-hover module-card" data-module="insight">
+            <div class="w-14 h-14 rounded-2xl bg-emerald-500/15 border border-emerald-400/20 flex items-center justify-center text-2xl mb-5">💬</div>
+            <h3 class="text-2xl font-bold mb-3">SHAP 洞察</h3>
+            <p class="text-slate-400 leading-8">查看一级主结果的重要特征，支撑你的展示与答辩。</p>
+          </button>
+          <button class="glass-strong rounded-3xl p-8 text-left card-hover module-card" data-module="favorites">
+            <div class="w-14 h-14 rounded-2xl bg-amber-500/15 border border-amber-400/20 flex items-center justify-center text-2xl mb-5">⭐</div>
+            <h3 class="text-2xl font-bold mb-3">我的收藏</h3>
+            <p class="text-slate-400 leading-8">查看你的重点球员样本，快速回到详情页继续展示。</p>
+          </button>
+        </div>
+        <div class="text-center mt-12">
+          <button id="backToLandingBtn" class="btn btn-secondary">← 返回开场页</button>
+        </div>
+      </div>
     </section>
 
-    <!-- 工作区 -->
-    <main id="workspace-shell" class="hidden py-8 md:py-10">
-        <div class="max-w-7xl mx-auto px-4 md:px-6">
-            <div class="grid grid-cols-1 xl:grid-cols-12 gap-6">
-                <aside class="xl:col-span-4 space-y-6">
-                    <div class="glass rounded-3xl p-5 screen-enter">
-                        <div class="flex items-center justify-between mb-4">
-                            <h3 class="text-xl font-bold">系统状态</h3>
-                            <button id="back-to-hub-btn" class="px-3 py-1 rounded-full mini-chip text-sm btn-active">返回大厅</button>
-                        </div>
-                        <div class="grid grid-cols-2 gap-3">
-                            <div class="mini-chip rounded-2xl p-4">
-                                <div class="text-xs text-slate-400">服务状态</div>
-                                <div id="healthStatus" class="mt-2 font-bold">检测中...</div>
-                            </div>
-                            <div class="mini-chip rounded-2xl p-4">
-                                <div class="text-xs text-slate-400">已载窗口</div>
-                                <div id="windowCount" class="mt-2 font-bold">-</div>
-                            </div>
-                            <div class="mini-chip rounded-2xl p-4">
-                                <div class="text-xs text-slate-400">新秀样本</div>
-                                <div id="rookieCount" class="mt-2 font-bold">-</div>
-                            </div>
-                            <div class="mini-chip rounded-2xl p-4">
-                                <div class="text-xs text-slate-400">历史样本</div>
-                                <div id="veteranCount" class="mt-2 font-bold">-</div>
-                            </div>
-                        </div>
+    <main id="workspaceShell" class="hidden-screen max-w-7xl mx-auto px-4 md:px-6 py-8">
+      <div class="mb-6 flex justify-between items-center gap-4">
+        <div class="text-sm text-slate-400">当前已进入工作区</div>
+        <button id="backToHubBtn" class="btn btn-secondary">返回大厅</button>
+      </div>
+
+      <section id="predictPage" class="hidden-screen space-y-6 fade-up">
+        <div class="grid grid-cols-1 xl:grid-cols-12 gap-6">
+          <div class="xl:col-span-4 space-y-6">
+            <div class="glass-strong rounded-3xl p-5">
+              <h3 class="text-2xl font-black mb-4">系统状态</h3>
+              <div class="grid grid-cols-2 gap-4">
+                <div class="glass rounded-2xl p-4 metric-card">
+                  <div class="text-sm text-slate-400">服务状态</div>
+                  <div id="healthStatus" class="mt-3 text-3xl font-black">检测中</div>
+                </div>
+                <div class="glass rounded-2xl p-4 metric-card">
+                  <div class="text-sm text-slate-400">已载窗口</div>
+                  <div id="windowCount" class="mt-3 text-3xl font-black">-</div>
+                </div>
+                <div class="glass rounded-2xl p-4 metric-card">
+                  <div class="text-sm text-slate-400">新秀样本</div>
+                  <div id="rookieCount" class="mt-3 text-3xl font-black">-</div>
+                </div>
+                <div class="glass rounded-2xl p-4 metric-card">
+                  <div class="text-sm text-slate-400">历史样本</div>
+                  <div id="veteranCount" class="mt-3 text-3xl font-black">-</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="glass-strong rounded-3xl p-5">
+              <div class="flex items-center justify-between mb-4">
+                <h3 class="text-2xl font-black">球员搜索</h3>
+                <span id="playerListMeta" class="text-sm text-slate-400"></span>
+              </div>
+              <div class="space-y-4">
+                <input id="searchInput" class="input-dark" placeholder="支持中文 / 英文 / 模糊搜索，如：文班亚马 / Victor / Paolo" />
+                <button id="searchBtn" class="w-full btn btn-primary">开始搜索</button>
+                <select id="playerSelect" class="select-dark">
+                  <option value="">或从列表中选择球员</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="glass-strong rounded-3xl p-5">
+              <div class="flex items-center justify-between mb-4">
+                <h3 class="text-2xl font-black">一级主结果特征重要性</h3>
+                <button id="reloadFeaturesBtn" class="btn btn-secondary !py-2 !px-4 text-sm">刷新</button>
+              </div>
+              <div id="featureImportanceWrap" class="space-y-4 text-slate-300">
+                <div class="text-slate-400">正在加载...</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="xl:col-span-8 space-y-6">
+            <div id="heroCard" class="glass-strong rounded-3xl p-6 hidden-screen">
+              <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+                <div>
+                  <div class="flex flex-wrap items-center gap-3 mb-4">
+                    <span id="analysisStageBadge" class="chip rounded-full px-4 py-2 text-sm"></span>
+                    <span id="confidenceLevelBadge" class="chip rounded-full px-4 py-2 text-sm"></span>
+                    <span id="secondaryBadge" class="chip rounded-full px-4 py-2 text-sm"></span>
+                  </div>
+                  <h2 id="playerNameCn" class="text-4xl md:text-5xl font-black"></h2>
+                  <div id="playerNameEn" class="text-slate-400 mt-2 text-lg"></div>
+                  <div class="mt-4 text-lg">一级结果：<span id="primaryLabel" class="font-black text-emerald-300"></span></div>
+                  <div class="mt-2 text-sm text-slate-300">输出性质：<span id="primaryResultType" class="font-bold text-white"></span></div>
+                  <p id="primaryResultNote" class="mt-4 text-slate-300 leading-8"></p>
+                </div>
+                <div class="flex flex-col items-center gap-3">
+                  <div id="potentialRing" class="ring" style="--pct: 0">
+                    <div class="text-center">
+                      <div id="potentialScore" class="text-3xl font-black">0</div>
+                      <div class="text-xs text-slate-400">潜力评分</div>
                     </div>
-
-                    <section id="predict-controls" class="glass rounded-3xl p-5 hidden screen-enter">
-                        <h3 class="text-xl font-bold mb-4">球员查询</h3>
-                        <div class="space-y-4">
-                            <div>
-                                <label class="block text-sm text-slate-300 mb-2">支持中英文模糊搜索</label>
-                                <div class="flex gap-3">
-                                    <input id="search-input" type="text" placeholder="如：文班亚马 / Victor / Paolo" class="w-full bg-slate-950/40 border border-white/10 rounded-2xl px-4 py-3 outline-none focus:border-emerald-400 transition" />
-                                    <button id="search-btn" class="px-5 py-3 rounded-2xl bg-emerald-500 hover:bg-emerald-400 transition font-semibold btn-active">搜索</button>
-                                </div>
-                            </div>
-                            <div>
-                                <label class="block text-sm text-slate-300 mb-2">球员列表</label>
-                                <div class="relative">
-                                    <select id="player-select" class="w-full bg-slate-950/40 border border-white/10 rounded-2xl px-4 py-3 outline-none focus:border-emerald-400 transition appearance-none">
-                                        <option value="">请选择球员</option>
-                                    </select>
-                                    <span class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400">▾</span>
-                                </div>
-                            </div>
-                        </div>
-                    </section>
-
-                    <section id="compare-controls" class="glass rounded-3xl p-5 hidden screen-enter">
-                        <h3 class="text-xl font-bold mb-4">球员对比</h3>
-                        <div class="space-y-4">
-                            <div class="relative">
-                                <select id="compare-player1" class="w-full bg-slate-950/40 border border-white/10 rounded-2xl px-4 py-3 appearance-none outline-none focus:border-emerald-400">
-                                    <option value="">选择球员 A</option>
-                                </select>
-                                <span class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400">▾</span>
-                            </div>
-                            <div class="relative">
-                                <select id="compare-player2" class="w-full bg-slate-950/40 border border-white/10 rounded-2xl px-4 py-3 appearance-none outline-none focus:border-emerald-400">
-                                    <option value="">选择球员 B</option>
-                                </select>
-                                <span class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400">▾</span>
-                            </div>
-                            <button id="compare-btn" class="w-full px-5 py-3 rounded-2xl bg-blue-500 hover:bg-blue-400 transition font-semibold btn-active">开始对比</button>
-                        </div>
-                    </section>
-
-                    <section id="insight-controls" class="glass rounded-3xl p-5 hidden screen-enter">
-                        <div class="flex items-center justify-between mb-4">
-                            <h3 class="text-xl font-bold">一级主结果特征重要性</h3>
-                            <button id="reload-feature-btn" class="text-xs px-3 py-1 rounded-full mini-chip btn-active">刷新</button>
-                        </div>
-                        <div id="insight-feature-list" class="space-y-4"></div>
-                    </section>
-                </aside>
-
-                <section class="xl:col-span-8 space-y-6">
-                    <section id="predict-page" class="hidden space-y-6 screen-enter">
-                        <div id="hero-card" class="glass rounded-3xl p-5 md:p-6 hidden">
-                            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-5">
-                                <div>
-                                    <div class="flex flex-wrap items-center gap-3 mb-3">
-                                        <span id="analysis-stage-badge" class="mini-chip rounded-full px-3 py-1 text-sm"></span>
-                                        <span id="confidence-level-badge" class="mini-chip rounded-full px-3 py-1 text-sm"></span>
-                                        <span id="secondary-badge" class="mini-chip rounded-full px-3 py-1 text-sm"></span>
-                                    </div>
-                                    <h2 id="player-name-cn" class="text-3xl font-black"></h2>
-                                    <div id="player-name-en" class="text-slate-400 mt-1"></div>
-                                    <div class="mt-3 text-sm text-slate-300">一级结果：<span id="pred-type" class="font-bold text-white"></span></div>
-                                    <div class="mt-2 text-sm text-slate-300">输出性质：<span id="primary-result-type" class="font-bold text-white"></span></div>
-                                    <p id="primary-result-note" class="mt-3 text-sm leading-7 text-slate-300"></p>
-                                </div>
-                                <div class="flex flex-col items-center gap-3">
-                                    <div id="potential-circle" class="ring" style="--pct: 0">
-                                        <div class="text-center">
-                                            <div id="potential-score" class="text-3xl font-black">0</div>
-                                            <div class="text-xs text-slate-400">潜力评分</div>
-                                        </div>
-                                    </div>
-                                    <div class="text-sm text-slate-300">一级置信度：<span id="confidence" class="font-bold text-white">0%</span></div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div id="stats-grid" class="grid grid-cols-2 md:grid-cols-4 gap-4 hidden">
-                            <div class="glass rounded-2xl p-4"><div class="text-xs text-slate-400">新秀年龄</div><div id="newbie-age" class="mt-2 text-2xl font-bold">-</div></div>
-                            <div class="glass rounded-2xl p-4"><div class="text-xs text-slate-400">早期得分</div><div id="early-avg-score" class="mt-2 text-2xl font-bold">-</div></div>
-                            <div class="glass rounded-2xl p-4"><div class="text-xs text-slate-400">耐用度</div><div id="durability" class="mt-2 text-2xl font-bold">-</div></div>
-                            <div class="glass rounded-2xl p-4"><div class="text-xs text-slate-400">伤病风险</div><div id="injury-risk" class="mt-2 text-2xl font-bold">-</div></div>
-                            <div class="glass rounded-2xl p-4"><div class="text-xs text-slate-400">PER</div><div id="per" class="mt-2 text-2xl font-bold">-</div></div>
-                            <div class="glass rounded-2xl p-4"><div class="text-xs text-slate-400">TS%</div><div id="ts-percent" class="mt-2 text-2xl font-bold">-</div></div>
-                            <div class="glass rounded-2xl p-4"><div class="text-xs text-slate-400">USG%</div><div id="usg-percent" class="mt-2 text-2xl font-bold">-</div></div>
-                            <div class="glass rounded-2xl p-4"><div class="text-xs text-slate-400">Win Shares</div><div id="ws" class="mt-2 text-2xl font-bold">-</div></div>
-                        </div>
-
-                        <div class="grid grid-cols-1 2xl:grid-cols-2 gap-6 hidden" id="content-grid">
-                            <div class="glass rounded-3xl p-5">
-                                <div class="flex items-center justify-between mb-4">
-                                    <h3 class="text-xl font-bold">球员画像雷达图</h3>
-                                    <div class="text-xs text-slate-400">动态联动</div>
-                                </div>
-                                <canvas id="player-radar-chart" height="280"></canvas>
-                            </div>
-                            <div class="glass rounded-3xl p-5">
-                                <h3 class="text-xl font-bold mb-4">优势与短板</h3>
-                                <div class="space-y-4">
-                                    <div>
-                                        <div class="text-sm text-emerald-300 mb-2">核心优势</div>
-                                        <div id="core-strength" class="text-slate-200 leading-7"></div>
-                                    </div>
-                                    <div>
-                                        <div class="text-sm text-amber-300 mb-2">主要短板</div>
-                                        <div id="core-weakness" class="text-slate-200 leading-7"></div>
-                                    </div>
-                                    <div class="pt-2 border-t border-white/10">
-                                        <div class="text-sm text-slate-400 mb-2">规则画像说明</div>
-                                        <div id="secondary-explanation" class="text-slate-300 text-sm leading-7"></div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div id="report-section" class="glass rounded-3xl p-5 hidden">
-                            <h3 class="text-xl font-bold mb-4">综合评估报告</h3>
-                            <p id="player-report" class="text-slate-200 leading-8"></p>
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-5">
-                                <div class="mini-chip rounded-2xl p-4">
-                                    <div class="text-xs text-slate-400">预计生涯长度</div>
-                                    <div id="career-length" class="text-xl font-bold mt-2">-</div>
-                                </div>
-                                <div class="mini-chip rounded-2xl p-4">
-                                    <div class="text-xs text-slate-400">预计巅峰到来</div>
-                                    <div id="peak-period" class="text-xl font-bold mt-2">-</div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div id="similar-section" class="glass rounded-3xl p-5 hidden">
-                            <div class="flex items-center justify-between mb-4">
-                                <h3 class="text-xl font-bold">相似历史模板</h3>
-                                <span class="text-xs text-slate-400">基于前三年特征相似度</span>
-                            </div>
-                            <div id="similar-players" class="grid grid-cols-1 lg:grid-cols-2 gap-4"></div>
-                        </div>
-
-                        <div id="shap-section" class="glass rounded-3xl p-5 hidden">
-                            <div class="flex items-center justify-between mb-4">
-                                <h3 class="text-xl font-bold">SHAP 可解释性分析</h3>
-                                <span class="text-xs text-slate-400">仅正式预测（window=3）展示</span>
-                            </div>
-                            <img id="primary-shap-image" class="w-full rounded-2xl border border-white/10 hidden" alt="SHAP图" />
-                            <div id="shap-hint" class="text-sm text-slate-400">当前球员暂无可展示的 SHAP 图。</div>
-                        </div>
-                    </section>
-
-                    <section id="compare-page" class="hidden screen-enter">
-                        <div id="comparison-view" class="glass rounded-3xl p-5 hidden">
-                            <div class="flex items-center justify-between mb-4">
-                                <h3 class="text-xl font-bold">球员对比</h3>
-                                <span class="text-xs text-slate-400">动态接口返回</span>
-                            </div>
-                            <div class="grid grid-cols-1 2xl:grid-cols-2 gap-6">
-                                <div class="glass rounded-2xl p-4">
-                                    <canvas id="radar-chart" height="280"></canvas>
-                                </div>
-                                <div class="grid grid-cols-1 gap-4">
-                                    <div class="glass rounded-2xl p-4">
-                                        <div class="text-sm text-slate-400 mb-2">球员 A</div>
-                                        <div id="compareAInfo" class="text-slate-200 leading-7"></div>
-                                    </div>
-                                    <div class="glass rounded-2xl p-4">
-                                        <div class="text-sm text-slate-400 mb-2">球员 B</div>
-                                        <div id="compareBInfo" class="text-slate-200 leading-7"></div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </section>
-
-                    <section id="insight-page" class="hidden screen-enter">
-                        <div class="glass rounded-3xl p-5">
-                            <div class="flex justify-between items-center mb-6">
-                                <h3 class="text-2xl font-bold gradient-text">🧠 SHAP洞察中心</h3>
-                                <button id="refresh-insight-btn" class="px-4 py-2 rounded-full mini-chip btn-active">刷新特征重要性</button>
-                            </div>
-                            <div id="insight-feature-panel" class="space-y-4"></div>
-                        </div>
-                    </section>
-                </section>
+                  </div>
+                  <div class="text-sm text-slate-300">一级置信度：<span id="primaryConfidence" class="font-bold text-white">0%</span></div>
+                </div>
+              </div>
             </div>
+
+            <div id="statsGrid" class="hidden-screen grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div class="glass rounded-2xl p-4"><div class="text-sm text-slate-400">新秀年龄</div><div id="statAge" class="mt-3 text-3xl font-black">-</div></div>
+              <div class="glass rounded-2xl p-4"><div class="text-sm text-slate-400">早期得分</div><div id="statScore" class="mt-3 text-3xl font-black">-</div></div>
+              <div class="glass rounded-2xl p-4"><div class="text-sm text-slate-400">耐用度</div><div id="statDurability" class="mt-3 text-3xl font-black">-</div></div>
+              <div class="glass rounded-2xl p-4"><div class="text-sm text-slate-400">伤病风险</div><div id="statInjury" class="mt-3 text-3xl font-black">-</div></div>
+              <div class="glass rounded-2xl p-4"><div class="text-sm text-slate-400">PER</div><div id="statPer" class="mt-3 text-3xl font-black">-</div></div>
+              <div class="glass rounded-2xl p-4"><div class="text-sm text-slate-400">TS%</div><div id="statTs" class="mt-3 text-3xl font-black">-</div></div>
+              <div class="glass rounded-2xl p-4"><div class="text-sm text-slate-400">USG%</div><div id="statUsg" class="mt-3 text-3xl font-black">-</div></div>
+              <div class="glass rounded-2xl p-4"><div class="text-sm text-slate-400">Win Shares</div><div id="statWs" class="mt-3 text-3xl font-black">-</div></div>
+            </div>
+
+            <div id="contentGrid" class="hidden-screen grid grid-cols-1 2xl:grid-cols-2 gap-6">
+              <div class="glass-strong rounded-3xl p-5">
+                <h3 class="text-2xl font-black mb-4">球员画像雷达图</h3>
+                <canvas id="radarChart" height="300"></canvas>
+              </div>
+              <div class="glass-strong rounded-3xl p-5">
+                <h3 class="text-2xl font-black mb-4">优势与短板</h3>
+                <div class="space-y-5">
+                  <div>
+                    <div class="text-sm text-emerald-300 mb-2">核心优势</div>
+                    <div id="coreStrength" class="report-text text-slate-200"></div>
+                  </div>
+                  <div>
+                    <div class="text-sm text-amber-300 mb-2">主要短板</div>
+                    <div id="coreWeakness" class="report-text text-slate-200"></div>
+                  </div>
+                  <div class="pt-4 border-t border-white/10">
+                    <div class="text-sm text-slate-400 mb-2">规则画像说明</div>
+                    <div id="secondaryExplanation" class="rule-text text-slate-300"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div id="reportSection" class="glass-strong rounded-3xl p-5 hidden-screen">
+              <h3 class="text-2xl font-black mb-4">综合评估报告</h3>
+              <p id="playerReport" class="report-text text-slate-200"></p>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
+                <div class="glass rounded-2xl p-4"><div class="text-sm text-slate-400">预计生涯长度</div><div id="careerLength" class="mt-3 text-2xl font-black">-</div></div>
+                <div class="glass rounded-2xl p-4"><div class="text-sm text-slate-400">预计巅峰到来</div><div id="peakPeriod" class="mt-3 text-2xl font-black">-</div></div>
+              </div>
+            </div>
+
+            <div id="similarSection" class="glass-strong rounded-3xl p-5 hidden-screen">
+              <div class="flex items-center justify-between mb-4">
+                <h3 class="text-2xl font-black">相似历史模板</h3>
+                <span class="text-sm text-slate-400">基于前三年样本相似度</span>
+              </div>
+              <div id="similarPlayers" class="grid grid-cols-1 lg:grid-cols-2 gap-4"></div>
+            </div>
+
+            <div id="shapSection" class="glass-strong rounded-3xl p-5 hidden-screen">
+              <div class="flex items-center justify-between mb-4">
+                <h3 class="text-2xl font-black text-gradient">💬 SHAP 洞察中心</h3>
+                <button id="reloadShapBtn" class="btn btn-secondary">刷新特征重要性</button>
+              </div>
+              <img id="shapImage" class="w-full rounded-2xl border border-white/10 hidden-screen" alt="SHAP 图" />
+              <div id="shapHint" class="text-slate-400">当前球员暂无可展示的 SHAP 图</div>
+            </div>
+          </div>
         </div>
+      </section>
+
+      <section id="comparePage" class="hidden-screen space-y-6 fade-up">
+        <div class="grid grid-cols-1 xl:grid-cols-12 gap-6">
+          <div class="xl:col-span-4 space-y-6">
+            <div class="glass-strong rounded-3xl p-5">
+              <h3 class="text-2xl font-black mb-4">球员对比</h3>
+              <div class="space-y-4">
+                <select id="compareA" class="select-dark">
+                  <option value="">选择球员 A</option>
+                </select>
+                <select id="compareB" class="select-dark">
+                  <option value="">选择球员 B</option>
+                </select>
+                <button id="compareBtn" class="w-full btn btn-primary">开始对比</button>
+              </div>
+            </div>
+          </div>
+          <div class="xl:col-span-8 space-y-6">
+            <div id="compareSection" class="glass-strong rounded-3xl p-5 hidden-screen">
+              <div class="flex items-center justify-between mb-4">
+                <h3 class="text-2xl font-black">球员对比结果</h3>
+                <span class="text-sm text-slate-400">动态接口返回</span>
+              </div>
+              <div class="grid grid-cols-1 2xl:grid-cols-2 gap-6">
+                <div class="glass rounded-2xl p-4">
+                  <canvas id="compareChart" height="300"></canvas>
+                </div>
+                <div class="grid grid-cols-1 gap-4">
+                  <div class="glass rounded-2xl p-4"><div class="text-sm text-slate-400 mb-2">球员 A</div><div id="compareAInfo" class="report-text text-slate-200"></div></div>
+                  <div class="glass rounded-2xl p-4"><div class="text-sm text-slate-400 mb-2">球员 B</div><div id="compareBInfo" class="report-text text-slate-200"></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="insightPage" class="hidden-screen fade-up">
+        <div class="grid grid-cols-1 xl:grid-cols-12 gap-6">
+          <div class="xl:col-span-4 space-y-6">
+            <div class="glass-strong rounded-3xl p-5">
+              <div class="flex items-center justify-between mb-4">
+                <h3 class="text-2xl font-black">系统状态</h3>
+                <button id="returnHubFromInsight" class="btn btn-secondary !py-2 !px-4 text-sm">返回大厅</button>
+              </div>
+              <div class="grid grid-cols-2 gap-4">
+                <div class="glass rounded-2xl p-4 metric-card"><div class="text-sm text-slate-400">服务状态</div><div id="insightHealthStatus" class="mt-3 text-3xl font-black">正常运行</div></div>
+                <div class="glass rounded-2xl p-4 metric-card"><div class="text-sm text-slate-400">已载窗口</div><div id="insightWindowCount" class="mt-3 text-3xl font-black">-</div></div>
+                <div class="glass rounded-2xl p-4 metric-card"><div class="text-sm text-slate-400">新秀样本</div><div id="insightRookieCount" class="mt-3 text-3xl font-black">-</div></div>
+                <div class="glass rounded-2xl p-4 metric-card"><div class="text-sm text-slate-400">历史样本</div><div id="insightVeteranCount" class="mt-3 text-3xl font-black">-</div></div>
+              </div>
+            </div>
+
+            <div class="glass-strong rounded-3xl p-5">
+              <div class="flex items-center justify-between mb-4">
+                <h3 class="text-2xl font-black">一级主结果特征重要性</h3>
+                <button id="refreshInsightBtn" class="btn btn-secondary !py-2 !px-4 text-sm">刷新</button>
+              </div>
+              <div id="insightFeatureList" class="space-y-4 text-slate-300">
+                <div class="text-slate-400">正在加载...</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="xl:col-span-8">
+            <div class="glass-strong rounded-3xl p-5">
+              <div class="flex items-center justify-between mb-4">
+                <h3 class="text-4xl font-black text-gradient">💬 SHAP洞察中心</h3>
+                <button id="refreshInsightChartBtn" class="btn btn-secondary">刷新特征重要性</button>
+              </div>
+              <div id="insightFeatureHero" class="text-slate-300 text-lg">正在等待 SHAP 特征重要性数据...</div>
+              <div id="insightTopFeatureCards" class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6"></div>
+            </div>
+          </div>
+        </div>
+      </section>
     </main>
 
-    <!-- 收藏弹窗 -->
-    <div id="favorites-modal" class="hidden fixed inset-0 bg-black/50 z-50 items-center justify-center p-4">
-        <div class="glass rounded-3xl w-full max-w-2xl p-5">
-            <div class="flex items-center justify-between mb-4">
-                <h3 class="text-xl font-bold">我的收藏</h3>
-                <button id="close-favorites" class="px-3 py-1 rounded-full mini-chip btn-active">关闭</button>
-            </div>
-            <div id="favorites-list" class="space-y-3 max-h-[60vh] overflow-y-auto table-scroll"></div>
-            <div class="mt-4 text-right">
-                <button id="clear-favorites" class="px-4 py-2 rounded-full bg-red-500/15 text-red-400 btn-active">清空收藏</button>
-            </div>
+    <div id="favoritesModal" class="modal">
+      <div class="glass-strong rounded-3xl p-6 w-full max-w-3xl max-h-[80vh] overflow-auto">
+        <div class="flex items-center justify-between mb-5">
+          <h3 class="text-2xl font-black">我的收藏</h3>
+          <div class="flex items-center gap-3">
+            <button id="clearFavoritesBtn" class="btn btn-secondary !py-2 !px-4 text-sm">清空</button>
+            <button id="closeFavoritesBtn" class="btn btn-secondary !py-2 !px-4 text-sm">关闭</button>
+          </div>
         </div>
+        <div id="favoritesList" class="space-y-4"></div>
+      </div>
     </div>
 
-    <!-- 说明弹窗 -->
-    <div id="guide-modal" class="hidden fixed inset-0 bg-black/55 z-50 items-center justify-center p-4">
-        <div class="glass rounded-3xl w-full max-w-3xl p-6">
-            <div class="flex items-center justify-between mb-4">
-                <h3 class="text-2xl font-bold">系统使用说明</h3>
-                <button id="close-guide" class="px-3 py-1 rounded-full mini-chip btn-active">关闭</button>
-            </div>
-            <div class="space-y-4 text-slate-300 leading-8">
-                <p>1. 首年球员输出为“早期观察”，前两年球员输出为“中期判断”，三年窗口球员才显示“正式预测”。</p>
-                <p>2. 一级结果来自两阶段 XGBoost，二级结果来自规则画像系统。</p>
-                <p>3. SHAP 图只对正式预测球员展示。</p>
-                <p>4. 支持中英文模糊搜索与横向对比。</p>
-            </div>
+    <div id="guideModal" class="modal">
+      <div class="glass-strong rounded-3xl p-6 w-full max-w-2xl">
+        <div class="flex items-center justify-between mb-5">
+          <h3 class="text-2xl font-black">系统说明</h3>
+          <button id="closeGuideBtn" class="btn btn-secondary !py-2 !px-4 text-sm">关闭</button>
         </div>
+        <div class="space-y-4 text-slate-300 leading-8">
+          <p>1. 开场页用于展示项目氛围与定位。</p>
+          <p>2. 进入大厅后，选择不同功能进入对应页面。</p>
+          <p>3. 球员预测页支持中文、英文和模糊搜索。</p>
+          <p>4. 一级结果按照 1 年 / 2 年 / 3 年窗口分阶段展示，其中 3 年为正式预测。</p>
+          <p>5. SHAP 洞察页用于展示一级主结果的重要特征。</p>
+        </div>
+      </div>
     </div>
 
     <div id="toastWrap" class="fixed top-4 right-4 z-50 space-y-3"></div>
+  </div>
 
-    <script>
-        const API_BASE = (() => {
-            const p = window.location.port;
-            const isDevStatic = window.location.protocol === 'file:' || ['5500', '5501', '3000', '4173'].includes(p);
-            return isDevStatic ? 'http://127.0.0.1:8000' : '';
-        })();
+  <script>
+    const API_BASE = (() => {
+      const p = window.location.port;
+      const isDevStatic = window.location.protocol === 'file:' || ['5500', '5501', '3000', '4173'].includes(p);
+      return isDevStatic ? 'http://127.0.0.1:8000' : '';
+    })();
 
-        let allPlayers = [];
-        let favorites = JSON.parse(localStorage.getItem('nba-rookie-favorites') || '[]');
-        let radarChart = null;
-        let compareChart = null;
-        let currentPlayer = null;
+    let allPlayers = [];
+    let currentPlayer = null;
+    let radarChart = null;
+    let compareChart = null;
+    let favorites = JSON.parse(localStorage.getItem('nba-rookie-favorites') || '[]');
 
-        function showToast(message, type = 'info') {
-            const colors = {
-                success: 'border-emerald-400/40 bg-emerald-500/10',
-                error: 'border-red-400/40 bg-red-500/10',
-                warning: 'border-amber-400/40 bg-amber-500/10',
-                info: 'border-blue-400/40 bg-blue-500/10'
-            };
-            const wrap = document.getElementById('toastWrap');
-            const el = document.createElement('div');
-            el.className = `toast glass rounded-2xl px-4 py-3 border ${colors[type] || colors.info}`;
-            el.textContent = message;
-            wrap.appendChild(el);
-            setTimeout(() => el.remove(), 2600);
-        }
+    function showToast(message, type = 'info') {
+      const styles = {
+        success: 'border-emerald-400/40 bg-emerald-500/10',
+        error: 'border-red-400/40 bg-red-500/10',
+        warning: 'border-amber-400/40 bg-amber-500/10',
+        info: 'border-blue-400/40 bg-blue-500/10'
+      };
+      const wrap = document.getElementById('toastWrap');
+      const el = document.createElement('div');
+      el.className = `toast glass rounded-2xl px-4 py-3 border ${styles[type] || styles.info}`;
+      el.textContent = message;
+      wrap.appendChild(el);
+      setTimeout(() => el.remove(), 2600);
+    }
 
-        async function apiGet(url) {
-            const res = await fetch(`${API_BASE}${url}`);
-            if (!res.ok) {
-                let err = {};
-                try { err = await res.json(); } catch (_) {}
-                throw new Error(err.detail || `请求失败: ${url}`);
-            }
-            return await res.json();
-        }
+    async function apiGet(url) {
+      const res = await fetch(`${API_BASE}${url}`);
+      if (!res.ok) {
+        let err = {};
+        try { err = await res.json(); } catch (_) {}
+        throw new Error(err.detail || `请求失败: ${url}`);
+      }
+      return await res.json();
+    }
 
-        async function apiPost(url, data) {
-            const res = await fetch(`${API_BASE}${url}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data)
-            });
-            if (!res.ok) {
-                let err = {};
-                try { err = await res.json(); } catch (_) {}
-                throw new Error(err.detail || '请求失败');
-            }
-            return await res.json();
-        }
+    async function apiPost(url, data) {
+      const res = await fetch(`${API_BASE}${url}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+      if (!res.ok) {
+        let err = {};
+        try { err = await res.json(); } catch (_) {}
+        throw new Error(err.detail || `请求失败: ${url}`);
+      }
+      return await res.json();
+    }
 
-        function fmt(v, digits = 1) {
-            if (v === null || v === undefined || Number.isNaN(Number(v))) return '-';
-            return Number(v).toFixed(digits);
-        }
+    function fmt(v, d = 1) {
+      if (v === null || v === undefined || Number.isNaN(Number(v))) return '-';
+      return Number(v).toFixed(d);
+    }
 
-        function getDisplayPrimaryLabel(player) {
-            return player.official_primary_label || player.pred_primary_label || '暂无结果';
-        }
+    function getDisplayPrimaryLabel(player) {
+      return player.official_primary_label || player.pred_primary_label || '暂无结果';
+    }
 
-        function hideAllScreens() {
-            document.getElementById('landing-screen').classList.add('hidden');
-            document.getElementById('feature-hub').classList.add('hidden');
-            document.getElementById('workspace-shell').classList.add('hidden');
-            document.getElementById('predict-page').classList.add('hidden');
-            document.getElementById('compare-page').classList.add('hidden');
-            document.getElementById('insight-page').classList.add('hidden');
-            document.getElementById('predict-controls').classList.add('hidden');
-            document.getElementById('compare-controls').classList.add('hidden');
-            document.getElementById('insight-controls').classList.add('hidden');
-        }
+    function hideAllScreens() {
+      ['landingScreen', 'featureHub', 'workspaceShell'].forEach(id => document.getElementById(id)?.classList.add('hidden-screen'));
+      ['predictPage', 'comparePage', 'insightPage'].forEach(id => document.getElementById(id)?.classList.add('hidden-screen'));
+    }
 
-        function showLandingScreen() {
-            hideAllScreens();
-            document.getElementById('landing-screen').classList.remove('hidden');
-        }
+    function showLandingScreen() {
+      hideAllScreens();
+      document.getElementById('landingScreen').classList.remove('hidden-screen');
+    }
 
-        function showFeatureHub() {
-            hideAllScreens();
-            document.getElementById('feature-hub').classList.remove('hidden');
-        }
+    function showFeatureHub() {
+      hideAllScreens();
+      document.getElementById('featureHub').classList.remove('hidden-screen');
+    }
 
-        function openModule(moduleName) {
-            hideAllScreens();
-            document.getElementById('workspace-shell').classList.remove('hidden');
-            if (moduleName === 'predict') {
-                document.getElementById('predict-page').classList.remove('hidden');
-                document.getElementById('predict-controls').classList.remove('hidden');
-            } else if (moduleName === 'compare') {
-                document.getElementById('compare-page').classList.remove('hidden');
-                document.getElementById('compare-controls').classList.remove('hidden');
-            } else if (moduleName === 'insight') {
-                document.getElementById('insight-page').classList.remove('hidden');
-                document.getElementById('insight-controls').classList.remove('hidden');
-                loadFeatureImportancePanels();
-            } else if (moduleName === 'favorites') {
-                document.getElementById('predict-page').classList.remove('hidden');
-                document.getElementById('predict-controls').classList.remove('hidden');
-                document.getElementById('favorites-modal').style.display = 'flex';
-                renderFavoritesList();
-            }
-        }
+    function openModule(moduleName) {
+      hideAllScreens();
+      document.getElementById('workspaceShell').classList.remove('hidden-screen');
+      if (moduleName === 'predict') document.getElementById('predictPage').classList.remove('hidden-screen');
+      if (moduleName === 'compare') document.getElementById('comparePage').classList.remove('hidden-screen');
+      if (moduleName === 'insight') document.getElementById('insightPage').classList.remove('hidden-screen');
+      if (moduleName === 'favorites') {
+        document.getElementById('predictPage').classList.remove('hidden-screen');
+        openFavorites();
+      }
+    }
 
-        async function loadHealth() {
-            try {
-                const data = await apiGet('/api/health');
-                document.getElementById('healthStatus').textContent = data.status === 'ok' ? '正常运行' : '异常';
-                document.getElementById('rookieCount').textContent = data.rookie_rows ?? '-';
-                document.getElementById('veteranCount').textContent = data.veteran_rows ?? '-';
-                document.getElementById('windowCount').textContent = (data.windows_loaded || []).join(', ') || '-';
-            } catch (e) {
-                document.getElementById('healthStatus').textContent = '连接失败';
-                showToast('后端连接失败，请先启动 FastAPI 服务', 'error');
-            }
-        }
+    function updateFavoritesCount() {
+      document.getElementById('favoritesCount').textContent = favorites.length;
+    }
 
-        async function loadPlayersData() {
-            allPlayers = await apiGet('/api/rookies');
-            const playerSelect = document.getElementById('player-select');
-            const comparePlayer1 = document.getElementById('compare-player1');
-            const comparePlayer2 = document.getElementById('compare-player2');
-            [playerSelect, comparePlayer1, comparePlayer2].forEach(select => {
-                const first = select.querySelector('option');
-                select.innerHTML = '';
-                if (first) select.appendChild(first);
-            });
+    function openFavorites() {
+      renderFavoritesList();
+      document.getElementById('favoritesModal').classList.add('show');
+    }
 
-            allPlayers.forEach(player => {
-                const label = `${player.player_name_cn} (${player.player_position || '未知'} · ${player.analysis_stage || ''})`;
-                const option1 = document.createElement('option');
-                option1.value = player.player_name;
-                option1.textContent = label;
-                playerSelect.appendChild(option1);
+    function closeFavorites() {
+      document.getElementById('favoritesModal').classList.remove('show');
+    }
 
-                const option2 = document.createElement('option');
-                option2.value = player.player_name;
-                option2.textContent = label;
-                comparePlayer1.appendChild(option2);
+    function openGuide() {
+      document.getElementById('guideModal').classList.add('show');
+    }
 
-                const option3 = document.createElement('option');
-                option3.value = player.player_name;
-                option3.textContent = label;
-                comparePlayer2.appendChild(option3);
-            });
-        }
+    function closeGuide() {
+      document.getElementById('guideModal').classList.remove('show');
+    }
 
-        function updateFavoritesCount() {
-            document.getElementById('favorites-count').textContent = favorites.length;
-        }
-
-        function renderFavoritesList() {
-            const list = document.getElementById('favorites-list');
-            list.innerHTML = '';
-            if (!favorites.length) {
-                list.innerHTML = '<div class="text-slate-400 text-center py-6">暂无收藏球员</div>';
-                return;
-            }
-            favorites.forEach((player, index) => {
-                const item = document.createElement('div');
-                item.className = 'glass rounded-2xl p-4 flex justify-between items-center';
-                item.innerHTML = `
-                    <div>
-                        <div class="font-bold">${player.player_name_cn || player.player_name}</div>
-                        <div class="text-sm text-slate-400">${player.player_name} · ${player.analysis_stage || ''}</div>
-                    </div>
-                    <div class="flex gap-2">
-                        <button class="view-favorite px-3 py-2 rounded-full mini-chip btn-active" data-player="${player.player_name}"><i class="fa fa-eye"></i></button>
-                        <button class="delete-favorite px-3 py-2 rounded-full bg-red-500/15 text-red-400 btn-active" data-index="${index}"><i class="fa fa-trash"></i></button>
-                    </div>
-                `;
-                list.appendChild(item);
-                item.querySelector('.view-favorite').addEventListener('click', async () => {
-                    document.getElementById('favorites-modal').style.display = 'none';
-                    try {
-                        const detail = await apiPost('/api/predict', { player_name: player.player_name });
-                        openModule('predict');
-                        loadPlayerDetails(detail);
-                    } catch (e) {
-                        showToast(e.message, 'error');
-                    }
-                });
-                item.querySelector('.delete-favorite').addEventListener('click', () => {
-                    favorites.splice(index, 1);
-                    localStorage.setItem('nba-rookie-favorites', JSON.stringify(favorites));
-                    updateFavoritesCount();
-                    renderFavoritesList();
-                    showToast('已删除收藏', 'info');
-                });
-            });
-        }
-
-        function initRadarChart(targetId, datasets, labels) {
-            const ctx = document.getElementById(targetId);
-            if (!ctx) return;
-            const chartRef = targetId === 'player-radar-chart' ? radarChart : compareChart;
-            if (chartRef) chartRef.destroy();
-
-            const chart = new Chart(ctx, {
-                type: 'radar',
-                data: { labels, datasets: Array.isArray(datasets) ? datasets : [datasets] },
-                options: {
-                    plugins: { legend: { labels: { color: '#e2e8f0' } } },
-                    scales: {
-                        r: {
-                            suggestedMin: 0,
-                            suggestedMax: 100,
-                            angleLines: { color: 'rgba(255,255,255,0.08)' },
-                            grid: { color: 'rgba(255,255,255,0.08)' },
-                            pointLabels: { color: '#cbd5e1' },
-                            ticks: { color: '#94a3b8', backdropColor: 'transparent' }
-                        }
-                    }
-                }
-            });
-            if (targetId === 'player-radar-chart') radarChart = chart;
-            else compareChart = chart;
-        }
-
-        function loadSimilarPlayers(similarPlayers) {
-            const container = document.getElementById('similar-players');
-            container.innerHTML = '';
-            if (!similarPlayers || !similarPlayers.length) {
-                container.innerHTML = '<div class="text-slate-400">暂无历史模板</div>';
-                return;
-            }
-            similarPlayers.forEach(player => {
-                const card = document.createElement('div');
-                card.className = 'glass rounded-3xl p-5';
-                card.innerHTML = `
-                    <div class="flex justify-between items-start mb-4 gap-4">
-                        <div>
-                            <h4 class="text-xl font-bold">${player.name}</h4>
-                            <p class="text-slate-400">${player.type || '未知类型'} · ${player.sub_type || '未知画像'}</p>
-                        </div>
-                        <span class="mini-chip rounded-full px-3 py-1 text-sm">相似度 ${player.similarity ?? 0}%</span>
-                    </div>
-                    <div class="grid grid-cols-2 gap-3 text-sm mb-4">
-                        <div class="mini-chip rounded-xl p-3">模板得分：${player.score ?? 0}</div>
-                        <div class="mini-chip rounded-xl p-3">生涯长度：${player.career_length ?? 0}年</div>
-                        <div class="mini-chip rounded-xl p-3">篮板：${player.reb ?? 0}</div>
-                        <div class="mini-chip rounded-xl p-3">助攻：${player.ast ?? 0}</div>
-                    </div>
-                    <p class="text-sm leading-7 text-slate-300">${player.report || ''}</p>
-                `;
-                container.appendChild(card);
-            });
-        }
-
-        function loadPlayerDetails(player) {
-            currentPlayer = player;
-            document.getElementById('hero-card').classList.remove('hidden');
-            document.getElementById('stats-grid').classList.remove('hidden');
-            document.getElementById('content-grid').classList.remove('hidden');
-            document.getElementById('report-section').classList.remove('hidden');
-            document.getElementById('similar-section').classList.remove('hidden');
-
-            document.getElementById('player-name-cn').textContent = player.player_name_cn || player.player_name;
-            document.getElementById('player-name-en').textContent = player.player_name || '';
-            document.getElementById('analysis-stage-badge').textContent = player.analysis_stage || '未知阶段';
-            document.getElementById('confidence-level-badge').textContent = `置信等级：${player.confidence_level || '未知'}`;
-            document.getElementById('secondary-badge').textContent = `规则画像：${player.pred_secondary_label || '暂无'}`;
-            document.getElementById('pred-type').textContent = getDisplayPrimaryLabel(player);
-            document.getElementById('primary-result-type').textContent = player.primary_result_type || '';
-            document.getElementById('primary-result-note').textContent = player.primary_result_note || '';
-
-            document.getElementById('potential-score').textContent = player.potential_score || 0;
-            document.getElementById('potential-circle').style.setProperty('--pct', player.potential_score || 0);
-            document.getElementById('confidence').textContent = `${Math.round((Number(player.pred_primary_confidence) || 0) * 100)}%`;
-
-            document.getElementById('newbie-age').textContent = fmt(player.newbie_age);
-            document.getElementById('early-avg-score').textContent = fmt(player.early_avg_score);
-            document.getElementById('durability').textContent = `${fmt(player.durability)}%`;
-            document.getElementById('injury-risk').textContent = `${fmt(player.injury_risk)}%`;
-            document.getElementById('per').textContent = fmt(player.per);
-            document.getElementById('ts-percent').textContent = `${fmt(player.ts_percent)}%`;
-            document.getElementById('usg-percent').textContent = `${fmt(player.usg_percent)}%`;
-            document.getElementById('ws').textContent = fmt(player.ws);
-
-            document.getElementById('core-strength').textContent = player.core_strength || '暂无数据';
-            document.getElementById('core-weakness').textContent = player.core_weakness || '暂无数据';
-            document.getElementById('secondary-explanation').textContent = player.secondary_explanation?.note || '二级画像由规则系统生成';
-            document.getElementById('player-report').textContent = player.report || '暂无报告';
-            document.getElementById('career-length').textContent = `${player.career_length || '-'} 年`;
-            document.getElementById('peak-period').textContent = `${player.peak_period || '-'} 赛季后`;
-
-            const radarLabels = ['防守', '得分', '篮板', '组织', '投射', '效率'];
-            const radarData = {
-                label: player.player_name_cn || player.player_name,
-                data: player.radar_data || [50,50,50,50,50,50],
-                backgroundColor: 'rgba(16,185,129,0.18)',
-                borderColor: '#10b981',
-                pointBackgroundColor: '#34d399',
-                pointBorderColor: '#fff'
-            };
-            initRadarChart('player-radar-chart', radarData, radarLabels);
-            loadSimilarPlayers(player.similar_players || []);
-
-            const shapSection = document.getElementById('shap-section');
-            const shapImage = document.getElementById('primary-shap-image');
-            const shapHint = document.getElementById('shap-hint');
-            if (player.window_years === 3 && player.primary_shap_plot) {
-                shapSection.classList.remove('hidden');
-                shapImage.classList.remove('hidden');
-                shapHint.classList.add('hidden');
-                shapImage.src = `${API_BASE}${player.primary_shap_plot}`;
-            } else {
-                shapSection.classList.remove('hidden');
-                shapImage.classList.add('hidden');
-                shapImage.removeAttribute('src');
-                shapHint.classList.remove('hidden');
-            }
-
-            updateFavoriteButton();
-        }
-
-        function updateFavoriteButton() {
-            // 当前版本保留收藏逻辑，不额外加页面按钮也能用 modal 管理
-        }
-
-        async function fetchPlayerPrediction(playerName) {
-            return await apiPost('/api/predict', { player_name: playerName });
-        }
-
-        async function loadFeatureImportancePanels() {
-            const targets = [
-                document.getElementById('insight-feature-list'),
-                document.getElementById('insight-feature-panel')
-            ].filter(Boolean);
-
-            targets.forEach(t => t.innerHTML = '<div class="text-slate-400">正在加载特征重要性...</div>');
-            try {
-                const data = await apiGet('/api/feature-importance');
-                const html = (data.top_features || []).map(item => {
-                    const val = Number(item.importance || 0);
-                    return `
-                        <div>
-                            <div class="flex justify-between items-center mb-2">
-                                <span class="font-medium">${item.feature}</span>
-                                <span class="text-slate-400 text-sm">${val.toFixed(4)}</span>
-                            </div>
-                            <div class="feature-bar"><span style="width:${Math.min(100, val * 100)}%"></span></div>
-                        </div>
-                    `;
-                }).join('') || '<div class="text-slate-400">暂无特征重要性文件</div>';
-                targets.forEach(t => t.innerHTML = html);
-            } catch (e) {
-                targets.forEach(t => t.innerHTML = '<div class="text-slate-400">未找到 SHAP 特征重要性文件</div>');
-            }
-        }
-
-        function renderPlayerComparison(player1, player2) {
-            document.getElementById('comparison-view').classList.remove('hidden');
-            const radarLabels = ['防守', '得分', '篮板', '组织', '投射', '效率'];
-            const radarData = [
-                {
-                    label: player1.player_name_cn || player1.player_name,
-                    data: player1.radar_data || [50,50,50,50,50,50],
-                    backgroundColor: 'rgba(16,185,129,0.16)',
-                    borderColor: '#10b981'
-                },
-                {
-                    label: player2.player_name_cn || player2.player_name,
-                    data: player2.radar_data || [50,50,50,50,50,50],
-                    backgroundColor: 'rgba(59,130,246,0.16)',
-                    borderColor: '#3b82f6'
-                }
-            ];
-            initRadarChart('radar-chart', radarData, radarLabels);
-
-            document.getElementById('compareAInfo').innerHTML = `
-                <div class="font-bold text-lg">${player1.player_name_cn || player1.player_name}</div>
-                <div>阶段：${player1.analysis_stage || '-'}</div>
-                <div>一级：${getDisplayPrimaryLabel(player1)}</div>
-                <div>规则画像：${player1.pred_secondary_label || '-'}</div>
-                <div>早期得分：${fmt(player1.early_avg_score)}</div>
-            `;
-            document.getElementById('compareBInfo').innerHTML = `
-                <div class="font-bold text-lg">${player2.player_name_cn || player2.player_name}</div>
-                <div>阶段：${player2.analysis_stage || '-'}</div>
-                <div>一级：${getDisplayPrimaryLabel(player2)}</div>
-                <div>规则画像：${player2.pred_secondary_label || '-'}</div>
-                <div>早期得分：${fmt(player2.early_avg_score)}</div>
-            `;
-        }
-
-        function initScreenFlow() {
-            document.getElementById('enter-system-btn').addEventListener('click', showFeatureHub);
-            document.getElementById('open-guide-from-landing').addEventListener('click', () => {
-                document.getElementById('guide-modal').style.display = 'flex';
-            });
-            document.getElementById('back-to-landing-btn').addEventListener('click', showLandingScreen);
-            document.getElementById('back-to-hub-btn').addEventListener('click', showFeatureHub);
-            document.querySelectorAll('.module-card').forEach(card => {
-                card.addEventListener('click', () => openModule(card.dataset.module));
-            });
-        }
-
-        function bindDynamicSearchEvents() {
-            document.getElementById('search-btn').addEventListener('click', async () => {
-                const searchTerm = document.getElementById('search-input').value.trim();
-                if (!searchTerm) {
-                    showToast('请输入球员姓名', 'warning');
-                    return;
-                }
-                try {
-                    const player = await fetchPlayerPrediction(searchTerm);
-                    openModule('predict');
-                    loadPlayerDetails(player);
-                    showToast(`已加载：${player.player_name_cn || player.player_name}`, 'success');
-                } catch (error) {
-                    showToast(error.message || '未找到该球员', 'error');
-                }
-            });
-
-            document.getElementById('search-input').addEventListener('keypress', (e) => {
-                if (e.key === 'Enter') document.getElementById('search-btn').click();
-            });
-        }
-
-        function initPlayerSelect() {
-            document.getElementById('player-select').addEventListener('change', async (e) => {
-                const playerName = e.target.value;
-                if (!playerName) return;
-                try {
-                    const player = await fetchPlayerPrediction(playerName);
-                    openModule('predict');
-                    loadPlayerDetails(player);
-                } catch (error) {
-                    showToast(error.message || '球员加载失败', 'error');
-                }
-            });
-        }
-
-        function initPlayerComparison() {
-            document.getElementById('compare-btn').addEventListener('click', async () => {
-                const a = document.getElementById('compare-player1').value;
-                const b = document.getElementById('compare-player2').value;
-                if (!a || !b) {
-                    showToast('请先选择两名球员', 'warning');
-                    return;
-                }
-                try {
-                    const result = await apiPost('/api/players/compare', { player_name_a: a, player_name_b: b });
-                    openModule('compare');
-                    renderPlayerComparison(result.player_a, result.player_b);
-                } catch (error) {
-                    showToast(error.message || '对比失败', 'error');
-                }
-            });
-        }
-
-        function initFavorites() {
-            updateFavoritesCount();
-
-            document.getElementById('favorites-btn').addEventListener('click', () => {
-                renderFavoritesList();
-                document.getElementById('favorites-modal').style.display = 'flex';
-            });
-            document.getElementById('close-favorites').addEventListener('click', () => {
-                document.getElementById('favorites-modal').style.display = 'none';
-            });
-            document.getElementById('clear-favorites').addEventListener('click', () => {
-                favorites = [];
-                localStorage.setItem('nba-rookie-favorites', JSON.stringify(favorites));
-                updateFavoritesCount();
-                renderFavoritesList();
-                showToast('已清空所有收藏', 'info');
-            });
-            document.getElementById('favorites-modal').addEventListener('click', (e) => {
-                if (e.target === document.getElementById('favorites-modal')) {
-                    document.getElementById('favorites-modal').style.display = 'none';
-                }
-            });
-        }
-
-        function initGuideModal() {
-            document.getElementById('guide-btn').addEventListener('click', () => {
-                document.getElementById('guide-modal').style.display = 'flex';
-            });
-            document.getElementById('close-guide').addEventListener('click', () => {
-                document.getElementById('guide-modal').style.display = 'none';
-            });
-            document.getElementById('guide-modal').addEventListener('click', (e) => {
-                if (e.target === document.getElementById('guide-modal')) {
-                    document.getElementById('guide-modal').style.display = 'none';
-                }
-            });
-        }
-
-        document.getElementById('reload-feature-btn').addEventListener('click', loadFeatureImportancePanels);
-        document.getElementById('refresh-insight-btn').addEventListener('click', loadFeatureImportancePanels);
-
-        document.addEventListener('DOMContentLoaded', async () => {
-            try {
-                await loadHealth();
-                await loadPlayersData();
-                await loadFeatureImportancePanels();
-            } catch (e) {
-                console.error(e);
-            }
-            initFavorites();
-            initGuideModal();
-            initScreenFlow();
-            bindDynamicSearchEvents();
-            initPlayerSelect();
-            initPlayerComparison();
-            showLandingScreen();
-            setTimeout(() => {
-                document.getElementById('guide-modal').style.display = 'flex';
-            }, 1200);
+    function renderFavoritesList() {
+      const wrap = document.getElementById('favoritesList');
+      wrap.innerHTML = '';
+      if (!favorites.length) {
+        wrap.innerHTML = '<div class="text-slate-400">暂无收藏球员。</div>';
+        return;
+      }
+      favorites.forEach((player, idx) => {
+        const card = document.createElement('div');
+        card.className = 'glass rounded-2xl p-4 flex flex-col md:flex-row md:items-center justify-between gap-4';
+        card.innerHTML = `
+          <div>
+            <div class="text-xl font-bold">${player.player_name_cn || player.player_name}</div>
+            <div class="text-sm text-slate-400 mt-1">${player.player_name} · ${player.analysis_stage || ''}</div>
+          </div>
+          <div class="flex gap-3">
+            <button class="btn btn-primary !py-2 !px-4 text-sm view-fav-btn">查看</button>
+            <button class="btn btn-secondary !py-2 !px-4 text-sm del-fav-btn">删除</button>
+          </div>
+        `;
+        card.querySelector('.view-fav-btn').addEventListener('click', async () => {
+          try {
+            const detail = await apiPost('/api/predict', { player_name: player.player_name });
+            openModule('predict');
+            closeFavorites();
+            loadPlayerDetails(detail);
+          } catch (e) {
+            showToast(e.message, 'error');
+          }
         });
-    </script>
+        card.querySelector('.del-fav-btn').addEventListener('click', () => {
+          favorites.splice(idx, 1);
+          localStorage.setItem('nba-rookie-favorites', JSON.stringify(favorites));
+          updateFavoritesCount();
+          renderFavoritesList();
+        });
+        wrap.appendChild(card);
+      });
+    }
+
+    async function loadHealth() {
+      try {
+        const data = await apiGet('/api/health');
+        document.getElementById('healthStatus').textContent = data.status === 'ok' ? '正常运行' : '异常';
+        document.getElementById('windowCount').textContent = (data.windows_loaded || []).join(', ') || '-';
+        document.getElementById('rookieCount').textContent = data.rookie_rows ?? '-';
+        document.getElementById('veteranCount').textContent = data.veteran_rows ?? '-';
+
+        document.getElementById('insightHealthStatus').textContent = data.status === 'ok' ? '正常运行' : '异常';
+        document.getElementById('insightWindowCount').textContent = (data.windows_loaded || []).join(', ') || '-';
+        document.getElementById('insightRookieCount').textContent = data.rookie_rows ?? '-';
+        document.getElementById('insightVeteranCount').textContent = data.veteran_rows ?? '-';
+      } catch (e) {
+        showToast('后端连接失败，请检查服务是否启动', 'error');
+      }
+    }
+
+    async function loadPlayers() {
+      allPlayers = await apiGet('/api/rookies');
+      const selects = [document.getElementById('playerSelect'), document.getElementById('compareA'), document.getElementById('compareB')];
+      selects.forEach(select => {
+        const first = select.querySelector('option');
+        select.innerHTML = '';
+        if (first) select.appendChild(first);
+        allPlayers.forEach(player => {
+          const option = document.createElement('option');
+          option.value = player.player_name;
+          option.textContent = `${player.player_name_cn} · ${player.analysis_stage || ''}`;
+          select.appendChild(option);
+        });
+      });
+      document.getElementById('playerListMeta').textContent = `共 ${allPlayers.length} 名球员`;
+    }
+
+    async function loadFeatureImportance(targetWrapId = 'featureImportanceWrap', hero = false) {
+      const wrap = document.getElementById(targetWrapId);
+      if (!wrap) return;
+      wrap.innerHTML = '<div class="text-slate-400">正在加载...</div>';
+      try {
+        const data = await apiGet('/api/feature-importance');
+        const features = data.top_features || [];
+        wrap.innerHTML = '';
+        if (!features.length) {
+          wrap.innerHTML = '<div class="text-slate-400">未找到 SHAP 特征重要性文件</div>';
+          return;
+        }
+        features.forEach(item => {
+          const row = document.createElement('div');
+          const val = Number(item.importance || 0);
+          row.innerHTML = `
+            <div class="flex items-center justify-between mb-2 text-sm">
+              <span class="font-medium">${item.feature}</span>
+              <span class="text-slate-400">${val.toFixed(4)}</span>
+            </div>
+            <div class="feature-bar"><span style="width:${Math.min(100, val * 100)}%"></span></div>
+          `;
+          wrap.appendChild(row);
+        });
+        if (hero) {
+          document.getElementById('insightFeatureHero').textContent = `当前最核心特征：${data.core_feature || '未知'}`;
+          const cards = document.getElementById('insightTopFeatureCards');
+          cards.innerHTML = '';
+          features.slice(0, 4).forEach((item, idx) => {
+            const card = document.createElement('div');
+            card.className = 'glass rounded-2xl p-4';
+            card.innerHTML = `
+              <div class="text-sm text-slate-400">Top ${idx + 1}</div>
+              <div class="text-xl font-black mt-2">${item.feature}</div>
+              <div class="text-slate-300 mt-2">重要性：${Number(item.importance || 0).toFixed(4)}</div>
+            `;
+            cards.appendChild(card);
+          });
+        }
+      } catch (e) {
+        wrap.innerHTML = '<div class="text-slate-400">未找到 SHAP 特征重要性文件</div>';
+        if (hero) {
+          document.getElementById('insightFeatureHero').textContent = '未找到 SHAP 特征重要性文件';
+          document.getElementById('insightTopFeatureCards').innerHTML = '';
+        }
+      }
+    }
+
+    function renderRadar(player) {
+      const ctx = document.getElementById('radarChart');
+      if (radarChart) radarChart.destroy();
+      radarChart = new Chart(ctx, {
+        type: 'radar',
+        data: {
+          labels: ['防守', '得分', '篮板', '组织', '投射', '效率'],
+          datasets: [{
+            label: player.player_name_cn || player.player_name,
+            data: player.radar_data || [50, 50, 50, 50, 50, 50],
+            backgroundColor: 'rgba(16,185,129,0.16)',
+            borderColor: '#10b981',
+            pointBackgroundColor: '#34d399',
+            pointBorderColor: '#fff'
+          }]
+        },
+        options: {
+          plugins: { legend: { labels: { color: '#dbeafe' } } },
+          scales: {
+            r: {
+              suggestedMin: 0,
+              suggestedMax: 100,
+              angleLines: { color: 'rgba(255,255,255,0.08)' },
+              grid: { color: 'rgba(255,255,255,0.08)' },
+              pointLabels: { color: '#dbeafe' },
+              ticks: { color: '#94a3b8', backdropColor: 'transparent' }
+            }
+          }
+        }
+      });
+    }
+
+    function renderSimilar(players) {
+      const wrap = document.getElementById('similarPlayers');
+      wrap.innerHTML = '';
+      if (!players || !players.length) {
+        wrap.innerHTML = '<div class="text-slate-400">暂无可展示的历史模板</div>';
+        return;
+      }
+      players.forEach(p => {
+        const card = document.createElement('div');
+        card.className = 'glass rounded-2xl p-4 similar-card';
+        card.innerHTML = `
+          <div class="flex items-start justify-between gap-4 mb-4">
+            <div>
+              <div class="text-xl font-bold">${p.name || '未知球员'}</div>
+              <div class="text-sm text-slate-400 mt-1">一级：${p.type || '未知'} · 二级：${p.sub_type || '未知'}</div>
+            </div>
+            <div class="chip rounded-full px-3 py-1 text-sm">相似度 ${fmt(p.similarity, 1)}%</div>
+          </div>
+          <div class="grid grid-cols-2 gap-3 mb-4 text-sm">
+            <div class="chip rounded-xl p-3">得分：${fmt(p.score)}</div>
+            <div class="chip rounded-xl p-3">生涯：${p.career_length ?? '-'} 年</div>
+            <div class="chip rounded-xl p-3">篮板：${fmt(p.reb)}</div>
+            <div class="chip rounded-xl p-3">助攻：${fmt(p.ast)}</div>
+          </div>
+          <div class="text-slate-300 text-sm leading-7">${p.report || ''}</div>
+        `;
+        wrap.appendChild(card);
+      });
+    }
+
+    function renderShap(player) {
+      const section = document.getElementById('shapSection');
+      const img = document.getElementById('shapImage');
+      const hint = document.getElementById('shapHint');
+      section.classList.remove('hidden-screen');
+      if (player.window_years === 3 && player.primary_shap_plot) {
+        img.classList.remove('hidden-screen');
+        img.src = `${API_BASE}${player.primary_shap_plot}`;
+        hint.classList.add('hidden-screen');
+      } else {
+        img.classList.add('hidden-screen');
+        img.removeAttribute('src');
+        hint.classList.remove('hidden-screen');
+      }
+    }
+
+    function loadPlayerDetails(player) {
+      currentPlayer = player;
+      document.getElementById('heroCard').classList.remove('hidden-screen');
+      document.getElementById('statsGrid').classList.remove('hidden-screen');
+      document.getElementById('contentGrid').classList.remove('hidden-screen');
+      document.getElementById('reportSection').classList.remove('hidden-screen');
+      document.getElementById('similarSection').classList.remove('hidden-screen');
+
+      document.getElementById('playerNameCn').textContent = player.player_name_cn || player.player_name;
+      document.getElementById('playerNameEn').textContent = player.player_name || '';
+      document.getElementById('analysisStageBadge').textContent = player.analysis_stage || '未知阶段';
+      document.getElementById('confidenceLevelBadge').textContent = `置信等级：${player.confidence_level || '未知'}`;
+      document.getElementById('secondaryBadge').textContent = `规则画像：${player.pred_secondary_label || '暂无'}`;
+      document.getElementById('primaryLabel').textContent = getDisplayPrimaryLabel(player);
+      document.getElementById('primaryResultType').textContent = player.primary_result_type || '';
+      document.getElementById('primaryResultNote').textContent = player.primary_result_note || '';
+      document.getElementById('primaryConfidence').textContent = `${Math.round((Number(player.pred_primary_confidence) || 0) * 100)}%`;
+      document.getElementById('potentialScore').textContent = player.potential_score ?? 0;
+      document.getElementById('potentialRing').style.setProperty('--pct', player.potential_score ?? 0);
+
+      document.getElementById('statAge').textContent = fmt(player.newbie_age);
+      document.getElementById('statScore').textContent = fmt(player.early_avg_score);
+      document.getElementById('statDurability').textContent = `${fmt(player.durability)}%`;
+      document.getElementById('statInjury').textContent = `${fmt(player.injury_risk)}%`;
+      document.getElementById('statPer').textContent = fmt(player.per);
+      document.getElementById('statTs').textContent = `${fmt(player.ts_percent)}%`;
+      document.getElementById('statUsg').textContent = `${fmt(player.usg_percent)}%`;
+      document.getElementById('statWs').textContent = fmt(player.ws);
+
+      document.getElementById('coreStrength').textContent = player.core_strength || '暂无';
+      document.getElementById('coreWeakness').textContent = player.core_weakness || '暂无';
+      document.getElementById('secondaryExplanation').textContent = player.secondary_explanation?.note || '二级分类由规则系统直接生成。';
+      document.getElementById('playerReport').textContent = player.report || '暂无报告';
+      document.getElementById('careerLength').textContent = `${player.career_length || '-'} 年`;
+      document.getElementById('peakPeriod').textContent = `${player.peak_period || '-'} 赛季后`;
+
+      renderRadar(player);
+      renderSimilar(player.similar_players || []);
+      renderShap(player);
+
+      document.getElementById('predictPage').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    async function searchPlayer(query) {
+      const player = await apiPost('/api/predict', { player_name: query });
+      openModule('predict');
+      loadPlayerDetails(player);
+      showToast(`已加载：${player.player_name_cn || player.player_name}`, 'success');
+    }
+
+    async function comparePlayers(a, b) {
+      const data = await apiPost('/api/players/compare', { player_name_a: a, player_name_b: b });
+      renderCompare(data.player_a, data.player_b);
+    }
+
+    function renderCompare(a, b) {
+      document.getElementById('compareSection').classList.remove('hidden-screen');
+      const ctx = document.getElementById('compareChart');
+      if (compareChart) compareChart.destroy();
+      compareChart = new Chart(ctx, {
+        type: 'radar',
+        data: {
+          labels: ['防守', '得分', '篮板', '组织', '投射', '效率'],
+          datasets: [
+            {
+              label: a.player_name_cn || a.player_name,
+              data: a.radar_data || [50,50,50,50,50,50],
+              backgroundColor: 'rgba(16,185,129,0.14)',
+              borderColor: '#10b981'
+            },
+            {
+              label: b.player_name_cn || b.player_name,
+              data: b.radar_data || [50,50,50,50,50,50],
+              backgroundColor: 'rgba(59,130,246,0.14)',
+              borderColor: '#3b82f6'
+            }
+          ]
+        },
+        options: {
+          plugins: { legend: { labels: { color: '#dbeafe' } } },
+          scales: {
+            r: {
+              suggestedMin: 0,
+              suggestedMax: 100,
+              angleLines: { color: 'rgba(255,255,255,0.08)' },
+              grid: { color: 'rgba(255,255,255,0.08)' },
+              pointLabels: { color: '#dbeafe' },
+              ticks: { color: '#94a3b8', backdropColor: 'transparent' }
+            }
+          }
+        }
+      });
+
+      document.getElementById('compareAInfo').innerHTML = `
+        <div class="text-xl font-black">${a.player_name_cn || a.player_name}</div>
+        <div class="mt-2">阶段：${a.analysis_stage || '-'}</div>
+        <div>一级：${getDisplayPrimaryLabel(a)}</div>
+        <div>规则画像：${a.pred_secondary_label || '-'}</div>
+        <div>得分：${fmt(a.early_avg_score)}</div>
+      `;
+      document.getElementById('compareBInfo').innerHTML = `
+        <div class="text-xl font-black">${b.player_name_cn || b.player_name}</div>
+        <div class="mt-2">阶段：${b.analysis_stage || '-'}</div>
+        <div>一级：${getDisplayPrimaryLabel(b)}</div>
+        <div>规则画像：${b.pred_secondary_label || '-'}</div>
+        <div>得分：${fmt(b.early_avg_score)}</div>
+      `;
+    }
+
+    function toggleFavoriteCurrentPlayer() {
+      if (!currentPlayer) {
+        showToast('请先加载一名球员', 'warning');
+        return;
+      }
+      const idx = favorites.findIndex(x => x.player_name === currentPlayer.player_name);
+      if (idx >= 0) {
+        favorites.splice(idx, 1);
+        showToast(`已取消收藏 ${currentPlayer.player_name_cn || currentPlayer.player_name}`, 'info');
+      } else {
+        favorites.push(currentPlayer);
+        showToast(`已收藏 ${currentPlayer.player_name_cn || currentPlayer.player_name}`, 'success');
+      }
+      localStorage.setItem('nba-rookie-favorites', JSON.stringify(favorites));
+      updateFavoritesCount();
+    }
+
+    function bindEvents() {
+      document.getElementById('enterSystemBtn').addEventListener('click', showFeatureHub);
+      document.getElementById('showGuideLandingBtn').addEventListener('click', openGuide);
+      document.getElementById('backToLandingBtn').addEventListener('click', showLandingScreen);
+      document.getElementById('backToHubBtn').addEventListener('click', showFeatureHub);
+      document.getElementById('returnHubFromInsight').addEventListener('click', showFeatureHub);
+
+      document.querySelectorAll('.module-card').forEach(btn => {
+        btn.addEventListener('click', () => openModule(btn.dataset.module));
+      });
+
+      document.getElementById('guideBtn').addEventListener('click', openGuide);
+      document.getElementById('closeGuideBtn').addEventListener('click', closeGuide);
+      document.getElementById('favoritesBtn').addEventListener('click', openFavorites);
+      document.getElementById('closeFavoritesBtn').addEventListener('click', closeFavorites);
+      document.getElementById('clearFavoritesBtn').addEventListener('click', () => {
+        favorites = [];
+        localStorage.setItem('nba-rookie-favorites', JSON.stringify(favorites));
+        updateFavoritesCount();
+        renderFavoritesList();
+      });
+
+      document.getElementById('searchBtn').addEventListener('click', async () => {
+        const q = document.getElementById('searchInput').value.trim();
+        if (!q) return showToast('请输入球员姓名', 'warning');
+        try { await searchPlayer(q); } catch (e) { showToast(e.message, 'error'); }
+      });
+
+      document.getElementById('searchInput').addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') document.getElementById('searchBtn').click();
+      });
+
+      document.getElementById('playerSelect').addEventListener('change', async (e) => {
+        if (!e.target.value) return;
+        try { await searchPlayer(e.target.value); } catch (er) { showToast(er.message, 'error'); }
+      });
+
+      document.getElementById('compareBtn').addEventListener('click', async () => {
+        const a = document.getElementById('compareA').value;
+        const b = document.getElementById('compareB').value;
+        if (!a || !b) return showToast('请先选择两名球员', 'warning');
+        try { await comparePlayers(a, b); } catch (e) { showToast(e.message, 'error'); }
+      });
+
+      document.getElementById('reloadFeaturesBtn').addEventListener('click', () => loadFeatureImportance('featureImportanceWrap', false));
+      document.getElementById('reloadShapBtn').addEventListener('click', () => loadFeatureImportance('featureImportanceWrap', false));
+      document.getElementById('refreshInsightBtn').addEventListener('click', () => loadFeatureImportance('insightFeatureList', true));
+      document.getElementById('refreshInsightChartBtn').addEventListener('click', () => loadFeatureImportance('insightFeatureList', true));
+
+      document.getElementById('favoritesModal').addEventListener('click', (e) => {
+        if (e.target === document.getElementById('favoritesModal')) closeFavorites();
+      });
+      document.getElementById('guideModal').addEventListener('click', (e) => {
+        if (e.target === document.getElementById('guideModal')) closeGuide();
+      });
+
+      document.getElementById('favoritesBtn').addEventListener('contextmenu', (e) => {
+        e.preventDefault();
+        toggleFavoriteCurrentPlayer();
+      });
+    }
+
+    function initParticles() {
+      const canvas = document.getElementById('bg-particles');
+      const ctx = canvas.getContext('2d');
+      let width = 0, height = 0;
+      let particles = [];
+      const PARTICLE_COUNT = 36;
+      const LINK_DISTANCE = 140;
+      const SPEED_LIMIT = 0.22;
+      const COLORS = [
+        'rgba(16,185,129,0.28)',
+        'rgba(59,130,246,0.24)',
+        'rgba(255,255,255,0.18)'
+      ];
+
+      function random(min, max) { return Math.random() * (max - min) + min; }
+      function resizeCanvas() {
+        width = canvas.width = window.innerWidth;
+        height = canvas.height = window.innerHeight;
+        particles = [];
+        for (let i = 0; i < PARTICLE_COUNT; i++) {
+          particles.push({
+            x: random(0, width),
+            y: random(0, height),
+            vx: random(-SPEED_LIMIT, SPEED_LIMIT),
+            vy: random(-SPEED_LIMIT, SPEED_LIMIT),
+            r: random(1.2, 2.8),
+            color: COLORS[Math.floor(Math.random() * COLORS.length)]
+          });
+        }
+      }
+      function update() {
+        particles.forEach(p => {
+          p.x += p.vx;
+          p.y += p.vy;
+          if (p.x < 0 || p.x > width) p.vx *= -1;
+          if (p.y < 0 || p.y > height) p.vy *= -1;
+          p.x = Math.max(0, Math.min(width, p.x));
+          p.y = Math.max(0, Math.min(height, p.y));
+        });
+      }
+      function draw() {
+        ctx.clearRect(0, 0, width, height);
+        particles.forEach(p => {
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+          ctx.fillStyle = p.color;
+          ctx.shadowColor = p.color;
+          ctx.shadowBlur = 8;
+          ctx.fill();
+        });
+        for (let i = 0; i < particles.length; i++) {
+          for (let j = i + 1; j < particles.length; j++) {
+            const a = particles[i], b = particles[j];
+            const dx = a.x - b.x, dy = a.y - b.y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            if (dist < LINK_DISTANCE) {
+              const alpha = (1 - dist / LINK_DISTANCE) * 0.10;
+              ctx.beginPath();
+              ctx.moveTo(a.x, a.y);
+              ctx.lineTo(b.x, b.y);
+              ctx.strokeStyle = `rgba(120,180,255,${alpha})`;
+              ctx.lineWidth = 0.7;
+              ctx.stroke();
+            }
+          }
+        }
+      }
+      function animate() {
+        update();
+        draw();
+        requestAnimationFrame(animate);
+      }
+      window.addEventListener('resize', resizeCanvas);
+      resizeCanvas();
+      animate();
+    }
+
+    async function init() {
+      bindEvents();
+      updateFavoritesCount();
+      initParticles();
+      await loadHealth();
+      await loadPlayers();
+      await loadFeatureImportance('featureImportanceWrap', false);
+      await loadFeatureImportance('insightFeatureList', true);
+      showLandingScreen();
+    }
+
+    init().catch(err => {
+      console.error(err);
+      showToast(err.message || '初始化失败', 'error');
+    });
+  </script>
 </body>
 </html>
