@@ -40,5 +40,5 @@ localPort = 8000
 externalPort = 8000
 
 [deployment]
-deploymentTarget = "autoscale"
+deploymentTarget = "cloudrun"
 run = ["python", "main.py"]
