@@ -1,0 +1,273 @@
+{
+  "primary_stage1_metrics": {
+    "1": {
+      "task_name": "一级分类-第一阶段(window=1)",
+      "accuracy": 0.4392857142857143,
+      "balanced_accuracy": 0.42615472870057175,
+      "macro_f1": 0.38332929096935886,
+      "report": {
+        "特殊轨迹型": {
+          "precision": 0.10666666666666667,
+          "recall": 0.4,
+          "f1-score": 0.16842105263157894,
+          "support": 20.0
+        },
+        "生涯波动型": {
+          "precision": 0.5,
+          "recall": 0.3821138211382114,
+          "f1-score": 0.43317972350230416,
+          "support": 123.0
+        },
+        "长青稳定型": {
+          "precision": 0.6126126126126126,
+          "recall": 0.49635036496350365,
+          "f1-score": 0.5483870967741935,
+          "support": 137.0
+        },
+        "accuracy": 0.4392857142857143,
+        "macro avg": {
+          "precision": 0.4064264264264264,
+          "recall": 0.42615472870057175,
+          "f1-score": 0.38332929096935886,
+          "support": 280.0
+        },
+        "weighted avg": {
+          "precision": 0.5270045045045044,
+          "recall": 0.4392857142857143,
+          "f1-score": 0.4706377117909982,
+          "support": 280.0
+        }
+      }
+    },
+    "2": {
+      "task_name": "一级分类-第一阶段(window=2)",
+      "accuracy": 0.46785714285714286,
+      "balanced_accuracy": 0.4297242497972425,
+      "macro_f1": 0.3927696525509814,
+      "report": {
+        "特殊轨迹型": {
+          "precision": 0.11290322580645161,
+          "recall": 0.35,
+          "f1-score": 0.17073170731707318,
+          "support": 20.0
+        },
+        "生涯波动型": {
+          "precision": 0.5125,
+          "recall": 0.3333333333333333,
+          "f1-score": 0.4039408866995074,
+          "support": 123.0
+        },
+        "长青稳定型": {
+          "precision": 0.6014492753623188,
+          "recall": 0.6058394160583942,
+          "f1-score": 0.6036363636363636,
+          "support": 137.0
+        },
+        "accuracy": 0.46785714285714286,
+        "macro avg": {
+          "precision": 0.4089508337229235,
+          "recall": 0.4297242497972425,
+          "f1-score": 0.3927696525509814,
+          "support": 280.0
+        },
+        "weighted avg": {
+          "precision": 0.5274789830027382,
+          "recall": 0.46785714285714286,
+          "f1-score": 0.4849912322448668,
+          "support": 280.0
+        }
+      }
+    },
+    "3": {
+      "task_name": "一级分类-第一阶段(window=3)",
+      "accuracy": 0.48928571428571427,
+      "balanced_accuracy": 0.4591102407374439,
+      "macro_f1": 0.41536201245820115,
+      "report": {
+        "特殊轨迹型": {
+          "precision": 0.11267605633802817,
+          "recall": 0.4,
+          "f1-score": 0.17582417582417584,
+          "support": 20.0
+        },
+        "生涯波动型": {
+          "precision": 0.5375,
+          "recall": 0.34959349593495936,
+          "f1-score": 0.4236453201970443,
+          "support": 123.0
+        },
+        "长青稳定型": {
+          "precision": 0.6666666666666666,
+          "recall": 0.6277372262773723,
+          "f1-score": 0.6466165413533834,
+          "support": 137.0
+        },
+        "accuracy": 0.48928571428571427,
+        "macro avg": {
+          "precision": 0.4389475743348982,
+          "recall": 0.4591102407374439,
+          "f1-score": 0.41536201245820115,
+          "support": 280.0
+        },
+        "weighted avg": {
+          "precision": 0.5703548373574782,
+          "recall": 0.48928571428571427,
+          "f1-score": 0.515040443093334,
+          "support": 280.0
+        }
+      }
+    }
+  },
+  "primary_special_metrics": {
+    "1": {
+      "task_name": "一级分类-第二阶段特殊轨迹(window=1)",
+      "accuracy": 0.6521739130434783,
+      "balanced_accuracy": 0.7083333333333334,
+      "macro_f1": 0.6450216450216449,
+      "report": {
+        "大器晚成型": {
+          "precision": 0.2857142857142857,
+          "recall": 0.5,
+          "f1-score": 0.36363636363636365,
+          "support": 4.0
+        },
+        "早衰型": {
+          "precision": 0.75,
+          "recall": 1.0,
+          "f1-score": 0.8571428571428571,
+          "support": 3.0
+        },
+        "超长巅峰型": {
+          "precision": 0.8333333333333334,
+          "recall": 0.625,
+          "f1-score": 0.7142857142857143,
+          "support": 16.0
+        },
+        "accuracy": 0.6521739130434783,
+        "macro avg": {
+          "precision": 0.623015873015873,
+          "recall": 0.7083333333333334,
+          "f1-score": 0.6450216450216449,
+          "support": 23.0
+        },
+        "weighted avg": {
+          "precision": 0.7272256728778469,
+          "recall": 0.6521739130434783,
+          "f1-score": 0.6719367588932806,
+          "support": 23.0
+        }
+      }
+    },
+    "2": {
+      "task_name": "一级分类-第二阶段特殊轨迹(window=2)",
+      "accuracy": 0.6956521739130435,
+      "balanced_accuracy": 0.7291666666666666,
+      "macro_f1": 0.6719211822660099,
+      "report": {
+        "大器晚成型": {
+          "precision": 0.3333333333333333,
+          "recall": 0.5,
+          "f1-score": 0.4,
+          "support": 4.0
+        },
+        "早衰型": {
+          "precision": 0.75,
+          "recall": 1.0,
+          "f1-score": 0.8571428571428571,
+          "support": 3.0
+        },
+        "超长巅峰型": {
+          "precision": 0.8461538461538461,
+          "recall": 0.6875,
+          "f1-score": 0.7586206896551724,
+          "support": 16.0
+        },
+        "accuracy": 0.6956521739130435,
+        "macro avg": {
+          "precision": 0.6431623931623931,
+          "recall": 0.7291666666666666,
+          "f1-score": 0.6719211822660099,
+          "support": 23.0
+        },
+        "weighted avg": {
+          "precision": 0.7444258639910813,
+          "recall": 0.6956521739130435,
+          "f1-score": 0.7091025915613621,
+          "support": 23.0
+        }
+      }
+    },
+    "3": {
+      "task_name": "一级分类-第二阶段特殊轨迹(window=3)",
+      "accuracy": 0.782608695652174,
+      "balanced_accuracy": 0.8958333333333334,
+      "macro_f1": 0.7795414462081128,
+      "report": {
+        "大器晚成型": {
+          "precision": 0.5,
+          "recall": 1.0,
+          "f1-score": 0.6666666666666666,
+          "support": 4.0
+        },
+        "早衰型": {
+          "precision": 0.75,
+          "recall": 1.0,
+          "f1-score": 0.8571428571428571,
+          "support": 3.0
+        },
+        "超长巅峰型": {
+          "precision": 1.0,
+          "recall": 0.6875,
+          "f1-score": 0.8148148148148148,
+          "support": 16.0
+        },
+        "accuracy": 0.782608695652174,
+        "macro avg": {
+          "precision": 0.75,
+          "recall": 0.8958333333333334,
+          "f1-score": 0.7795414462081128,
+          "support": 23.0
+        },
+        "weighted avg": {
+          "precision": 0.8804347826086957,
+          "recall": 0.782608695652174,
+          "f1-score": 0.7945709684840118,
+          "support": 23.0
+        }
+      }
+    }
+  },
+  "primary_metrics": {
+    "1": {
+      "stage1_accuracy": 0.4392857142857143,
+      "stage1_balanced_accuracy": 0.42615472870057175,
+      "stage1_macro_f1": 0.38332929096935886,
+      "special_accuracy": 0.6521739130434783,
+      "special_balanced_accuracy": 0.7083333333333334,
+      "special_macro_f1": 0.6450216450216449
+    },
+    "2": {
+      "stage1_accuracy": 0.46785714285714286,
+      "stage1_balanced_accuracy": 0.4297242497972425,
+      "stage1_macro_f1": 0.3927696525509814,
+      "special_accuracy": 0.6956521739130435,
+      "special_balanced_accuracy": 0.7291666666666666,
+      "special_macro_f1": 0.6719211822660099
+    },
+    "3": {
+      "stage1_accuracy": 0.48928571428571427,
+      "stage1_balanced_accuracy": 0.4591102407374439,
+      "stage1_macro_f1": 0.41536201245820115,
+      "special_accuracy": 0.782608695652174,
+      "special_balanced_accuracy": 0.8958333333333334,
+      "special_macro_f1": 0.7795414462081128
+    }
+  },
+  "secondary_metrics": {
+    "task_name": "二级规则画像模块",
+    "accuracy": null,
+    "balanced_accuracy": null,
+    "macro_f1": null,
+    "note": "二级分类已改为规则模块，不再使用监督模型训练。"
+  }
+}
