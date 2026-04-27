@@ -46,13 +46,8 @@
             --gold: #f59e0b;
         }
 
-        * {
-            box-sizing: border-box;
-        }
-
-        html {
-            scroll-behavior: smooth;
-        }
+        * { box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
 
         body {
             margin: 0;
@@ -114,30 +109,17 @@
         .btn-active {
             transition: transform 0.22s ease, box-shadow 0.22s ease, background 0.22s ease, border-color 0.22s ease;
         }
+        .btn-active:hover { transform: translateY(-2px); }
 
-        .btn-active:hover {
-            transform: translateY(-2px);
-        }
-
-        .screen-enter {
-            animation: screenFadeIn 0.55s ease both;
-        }
-
+        .screen-enter { animation: screenFadeIn 0.55s ease both; }
         @keyframes screenFadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(18px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+            from { opacity: 0; transform: translateY(18px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
         .module-card {
             transition: transform 0.35s ease, box-shadow 0.35s ease, border-color 0.35s ease;
         }
-
         .module-card:hover {
             transform: translateY(-8px) scale(1.018);
             border-color: rgba(16, 185, 129, 0.38);
@@ -150,7 +132,6 @@
             background: rgba(148, 163, 184, 0.18);
             overflow: hidden;
         }
-
         .feature-bar > span {
             display: block;
             height: 100%;
@@ -164,54 +145,34 @@
             border-bottom: 1px solid rgba(255,255,255,0.06);
             transition: background 0.2s ease, transform 0.2s ease;
         }
-
         .compare-result-item:hover {
             background: rgba(16, 185, 129, 0.12);
             transform: translateX(4px);
         }
-
-        .compare-result-item:last-child {
-            border-bottom: none;
-        }
-
-        .compare-result-main {
-            color: #f8fafc;
+        .compare-result-item:last-child { border-bottom: none; }
+        .compare-result-main { color: #f8fafc; font-weight: 800; }
+        .compare-result-sub { color: #94a3b8; font-size: 13px; margin-top: 4px; }
+        .compare-result-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 3px 8px;
+            border-radius: 999px;
+            border: 1px solid rgba(16,185,129,0.22);
+            background: rgba(16,185,129,0.10);
+            color: #6ee7b7;
+            font-size: 11px;
             font-weight: 800;
         }
 
-        .compare-result-sub {
-            color: #94a3b8;
-            font-size: 13px;
-            margin-top: 4px;
-        }
+        .custom-scroll::-webkit-scrollbar { width: 10px; height: 10px; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: rgba(148, 163, 184, 0.28); border-radius: 999px; }
+        .custom-scroll::-webkit-scrollbar-track { background: transparent; }
 
-        .custom-scroll::-webkit-scrollbar {
-            width: 10px;
-            height: 10px;
-        }
-
-        .custom-scroll::-webkit-scrollbar-thumb {
-            background: rgba(148, 163, 184, 0.28);
-            border-radius: 999px;
-        }
-
-        .custom-scroll::-webkit-scrollbar-track {
-            background: transparent;
-        }
-
-        .toast {
-            animation: toastIn 0.25s ease both;
-        }
-
+        .toast { animation: toastIn 0.25s ease both; }
         @keyframes toastIn {
-            from {
-                opacity: 0;
-                transform: translateY(-8px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+            from { opacity: 0; transform: translateY(-8px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
         .modal-mask {
@@ -244,10 +205,7 @@
                 conic-gradient(#10b981 calc(var(--pct) * 1%), rgba(148, 163, 184, 0.18) 0);
         }
 
-        select,
-        input {
-            color-scheme: dark;
-        }
+        select, input { color-scheme: dark; }
     </style>
 </head>
 
@@ -255,7 +213,6 @@
     <canvas id="bg-particles"></canvas>
 
     <div class="app-shell">
-        <!-- 顶部导航 -->
         <nav class="sticky top-0 z-40 border-b border-white/10 bg-slate-950/78 backdrop-blur-xl">
             <div class="max-w-7xl mx-auto px-5 md:px-8 py-4 flex items-center justify-between">
                 <div class="flex items-center gap-4">
@@ -279,7 +236,6 @@
             </div>
         </nav>
 
-        <!-- 开场页 -->
         <section id="landing-screen" class="min-h-[calc(100vh-82px)] flex items-center justify-center px-6 py-20">
             <div class="max-w-5xl mx-auto text-center screen-enter">
                 <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-500/10 border border-emerald-400/20 text-emerald-300 mb-6">
@@ -307,7 +263,6 @@
             </div>
         </section>
 
-        <!-- 功能大厅 -->
         <section id="feature-hub" class="hidden min-h-[calc(100vh-82px)] px-6 py-20">
             <div class="max-w-7xl mx-auto screen-enter">
                 <div class="text-center mb-12">
@@ -329,7 +284,7 @@
                             <i class="fa-solid fa-scale-balanced text-2xl"></i>
                         </div>
                         <h3 class="text-2xl font-black mb-3">球员对比</h3>
-                        <p class="text-slate-400 leading-7">支持中文、英文和模糊搜索，快速选择两名球员进行横向对比。</p>
+                        <p class="text-slate-400 leading-7">默认优先展示 2022 届、三年正式窗口球员，支持中英文和模糊搜索。</p>
                     </button>
 
                     <button class="module-card glass-card rounded-3xl p-8 text-left btn-active" data-module="insight">
@@ -357,7 +312,6 @@
             </div>
         </section>
 
-        <!-- 工作区 -->
         <main id="workspace-shell" class="hidden max-w-7xl mx-auto px-5 md:px-8 py-10">
             <div class="flex items-center justify-between mb-8">
                 <div class="text-slate-400">当前已进入工作区</div>
@@ -366,24 +320,20 @@
                 </button>
             </div>
 
-            <!-- 预测页 -->
             <section id="predict-page" class="hidden screen-enter">
                 <div class="grid grid-cols-1 xl:grid-cols-12 gap-7">
                     <div class="xl:col-span-4 space-y-6">
                         <div class="glass-card rounded-3xl p-6">
                             <h2 class="text-3xl font-black mb-6">球员预测</h2>
-
                             <div class="space-y-4">
                                 <div>
                                     <label class="block text-slate-400 mb-2">输入球员姓名</label>
-                                    <input id="predict-search-input" type="text" autocomplete="off" placeholder="文班亚马 / Victor / Banchero"
+                                    <input id="predict-search-input" type="text" autocomplete="off" placeholder="班凯罗 / Paolo / Jalen Williams"
                                            class="w-full px-5 py-4 rounded-2xl bg-slate-950/70 border border-white/10 focus:border-emerald-400 outline-none transition">
                                 </div>
-
                                 <button id="predict-search-btn" class="w-full py-4 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 transition font-black text-lg btn-active">
                                     开始预测
                                 </button>
-
                                 <div>
                                     <label class="block text-slate-400 mb-2">或从列表选择</label>
                                     <select id="player-select" class="w-full px-5 py-4 rounded-2xl bg-slate-950/70 border border-white/10 outline-none">
@@ -396,22 +346,10 @@
                         <div class="glass-card rounded-3xl p-6">
                             <h3 class="text-2xl font-black mb-5">系统状态</h3>
                             <div class="grid grid-cols-2 gap-4">
-                                <div class="metric-card">
-                                    <div class="text-sm text-slate-400">服务状态</div>
-                                    <div id="status-text" class="text-xl font-black mt-2">检测中</div>
-                                </div>
-                                <div class="metric-card">
-                                    <div class="text-sm text-slate-400">已载窗口</div>
-                                    <div id="window-text" class="text-xl font-black mt-2">-</div>
-                                </div>
-                                <div class="metric-card">
-                                    <div class="text-sm text-slate-400">新秀样本</div>
-                                    <div id="rookie-count" class="text-xl font-black mt-2">-</div>
-                                </div>
-                                <div class="metric-card">
-                                    <div class="text-sm text-slate-400">历史样本</div>
-                                    <div id="veteran-count" class="text-xl font-black mt-2">-</div>
-                                </div>
+                                <div class="metric-card"><div class="text-sm text-slate-400">服务状态</div><div id="status-text" class="text-xl font-black mt-2">检测中</div></div>
+                                <div class="metric-card"><div class="text-sm text-slate-400">已载窗口</div><div id="window-text" class="text-xl font-black mt-2">-</div></div>
+                                <div class="metric-card"><div class="text-sm text-slate-400">新秀样本</div><div id="rookie-count" class="text-xl font-black mt-2">-</div></div>
+                                <div class="metric-card"><div class="text-sm text-slate-400">历史样本</div><div id="veteran-count" class="text-xl font-black mt-2">-</div></div>
                             </div>
                         </div>
 
@@ -420,9 +358,7 @@
                                 <h3 class="text-2xl font-black">一级主结果特征重要性</h3>
                                 <button id="refresh-feature-btn" class="px-4 py-2 rounded-full bg-slate-800 border border-white/10 hover:bg-slate-700 transition text-sm">刷新</button>
                             </div>
-                            <div id="feature-list" class="space-y-4 text-slate-300">
-                                正在加载...
-                            </div>
+                            <div id="feature-list" class="space-y-4 text-slate-300">正在加载...</div>
                         </div>
                     </div>
 
@@ -469,9 +405,7 @@
                             <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
                                 <div class="glass-card rounded-3xl p-6">
                                     <h3 class="text-2xl font-black mb-4">能力雷达图</h3>
-                                    <div class="h-[390px]">
-                                        <canvas id="player-radar-chart"></canvas>
-                                    </div>
+                                    <div class="h-[390px]"><canvas id="player-radar-chart"></canvas></div>
                                 </div>
 
                                 <div class="glass-card rounded-3xl p-6">
@@ -495,17 +429,22 @@
                 </div>
             </section>
 
-            <!-- 对比页 -->
             <section id="compare-page" class="hidden screen-enter">
                 <div class="grid grid-cols-1 xl:grid-cols-12 gap-8">
                     <div class="xl:col-span-4">
                         <div class="glass-card rounded-3xl p-6">
-                            <h3 class="text-3xl font-black mb-6">球员对比</h3>
+                            <div class="flex items-start justify-between gap-3 mb-6">
+                                <div>
+                                    <h3 class="text-3xl font-black mb-2">球员对比</h3>
+                                    <p class="text-sm text-slate-400 leading-6">优先选择 2022 届、三年正式窗口球员，更适合答辩展示。</p>
+                                </div>
+                                <span class="px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-400/20 text-emerald-300 text-xs font-black whitespace-nowrap">三年窗口</span>
+                            </div>
 
                             <div class="mb-6">
                                 <label class="block text-slate-400 mb-2">选择球员 A</label>
                                 <div class="relative compare-search-box" data-target="a">
-                                    <input id="compare-search-a" type="text" autocomplete="off" placeholder="输入中文或英文，如：文班亚马 / Victor"
+                                    <input id="compare-search-a" type="text" autocomplete="off" placeholder="优先三年正式样本，如：班凯罗 / Paolo"
                                            class="w-full px-5 py-4 rounded-2xl bg-slate-950/70 border border-white/10 focus:border-emerald-400 outline-none transition">
                                     <div id="compare-result-a"
                                          class="hidden absolute z-50 left-0 right-0 mt-2 glass-card-strong rounded-2xl overflow-hidden shadow-2xl max-h-72 overflow-y-auto custom-scroll">
@@ -519,7 +458,7 @@
                             <div class="mb-6">
                                 <label class="block text-slate-400 mb-2">选择球员 B</label>
                                 <div class="relative compare-search-box" data-target="b">
-                                    <input id="compare-search-b" type="text" autocomplete="off" placeholder="输入中文或英文，如：切特 / Chet"
+                                    <input id="compare-search-b" type="text" autocomplete="off" placeholder="优先三年正式样本，如：杰伦威廉姆斯 / Jalen"
                                            class="w-full px-5 py-4 rounded-2xl bg-slate-950/70 border border-white/10 focus:border-blue-400 outline-none transition">
                                     <div id="compare-result-b"
                                          class="hidden absolute z-50 left-0 right-0 mt-2 glass-card-strong rounded-2xl overflow-hidden shadow-2xl max-h-72 overflow-y-auto custom-scroll">
@@ -535,20 +474,41 @@
                             </button>
 
                             <div class="mt-6 p-4 rounded-2xl bg-slate-950/50 border border-white/10">
-                                <div class="text-sm text-slate-400 mb-3">推荐展示组合</div>
+                                <div class="flex items-center justify-between mb-3">
+                                    <div class="text-sm text-slate-400">推荐展示组合</div>
+                                    <div class="text-xs px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-400/20 text-emerald-300 font-bold">
+                                        2022届 · 三年窗口
+                                    </div>
+                                </div>
+
                                 <div class="space-y-2">
                                     <button class="quick-compare-btn w-full text-left px-3 py-2 rounded-xl hover:bg-slate-800 transition"
-                                            data-a="Victor Wembanyama" data-b="Chet Holmgren">
-                                        文班亚马 vs 切特·霍姆格伦
+                                            data-a="Paolo Banchero" data-b="Jalen Williams">
+                                        <div class="font-bold">班凯罗 vs 杰伦·威廉姆斯</div>
+                                        <div class="text-xs text-slate-500 mt-1">进攻核心 vs 高效全能侧翼</div>
                                     </button>
+
                                     <button class="quick-compare-btn w-full text-left px-3 py-2 rounded-xl hover:bg-slate-800 transition"
-                                            data-a="Paolo Banchero" data-b="Walker Kessler">
-                                        班凯罗 vs 凯斯勒
+                                            data-a="Keegan Murray" data-b="Jabari Smith Jr.">
+                                        <div class="font-bold">基根·穆雷 vs 贾巴里·史密斯</div>
+                                        <div class="text-xs text-slate-500 mt-1">3D前锋 / 空间型前锋对比</div>
                                     </button>
+
                                     <button class="quick-compare-btn w-full text-left px-3 py-2 rounded-xl hover:bg-slate-800 transition"
-                                            data-a="Victor Wembanyama" data-b="Brandon Miller">
-                                        文班亚马 vs 布兰登·米勒
+                                            data-a="Walker Kessler" data-b="Jalen Duren">
+                                        <div class="font-bold">凯斯勒 vs 杜伦</div>
+                                        <div class="text-xs text-slate-500 mt-1">护框内线 vs 篮板冲击型内线</div>
                                     </button>
+
+                                    <button class="quick-compare-btn w-full text-left px-3 py-2 rounded-xl hover:bg-slate-800 transition"
+                                            data-a="Bennedict Mathurin" data-b="Shaedon Sharpe">
+                                        <div class="font-bold">马瑟林 vs 谢登·夏普</div>
+                                        <div class="text-xs text-slate-500 mt-1">得分型外线潜力对比</div>
+                                    </button>
+                                </div>
+
+                                <div class="mt-4 text-xs text-slate-500 leading-6">
+                                    答辩展示建议：优先使用已进入三年正式预测窗口的 2022 届球员，避免一年、两年样本导致解释不充分。
                                 </div>
                             </div>
                         </div>
@@ -589,29 +549,16 @@
                 </div>
             </section>
 
-            <!-- SHAP 洞察页 -->
             <section id="insight-page" class="hidden screen-enter">
                 <div class="grid grid-cols-1 xl:grid-cols-12 gap-7">
                     <div class="xl:col-span-4 space-y-6">
                         <div class="glass-card rounded-3xl p-6">
                             <h2 class="text-3xl font-black mb-6">系统状态</h2>
                             <div class="grid grid-cols-2 gap-4">
-                                <div class="metric-card">
-                                    <div class="text-sm text-slate-400">服务状态</div>
-                                    <div id="insight-status-text" class="text-xl font-black mt-2">-</div>
-                                </div>
-                                <div class="metric-card">
-                                    <div class="text-sm text-slate-400">已载窗口</div>
-                                    <div id="insight-window-text" class="text-xl font-black mt-2">-</div>
-                                </div>
-                                <div class="metric-card">
-                                    <div class="text-sm text-slate-400">新秀样本</div>
-                                    <div id="insight-rookie-count" class="text-xl font-black mt-2">-</div>
-                                </div>
-                                <div class="metric-card">
-                                    <div class="text-sm text-slate-400">历史样本</div>
-                                    <div id="insight-veteran-count" class="text-xl font-black mt-2">-</div>
-                                </div>
+                                <div class="metric-card"><div class="text-sm text-slate-400">服务状态</div><div id="insight-status-text" class="text-xl font-black mt-2">-</div></div>
+                                <div class="metric-card"><div class="text-sm text-slate-400">已载窗口</div><div id="insight-window-text" class="text-xl font-black mt-2">-</div></div>
+                                <div class="metric-card"><div class="text-sm text-slate-400">新秀样本</div><div id="insight-rookie-count" class="text-xl font-black mt-2">-</div></div>
+                                <div class="metric-card"><div class="text-sm text-slate-400">历史样本</div><div id="insight-veteran-count" class="text-xl font-black mt-2">-</div></div>
                             </div>
                         </div>
 
@@ -620,23 +567,18 @@
                                 <h3 class="text-2xl font-black">一级主结果特征重要性</h3>
                                 <button id="refresh-insight-feature-btn" class="px-4 py-2 rounded-full bg-slate-800 border border-white/10 hover:bg-slate-700 transition text-sm">刷新</button>
                             </div>
-                            <div id="insight-feature-list" class="space-y-4 text-slate-300">
-                                正在加载...
-                            </div>
+                            <div id="insight-feature-list" class="space-y-4 text-slate-300">正在加载...</div>
                         </div>
                     </div>
 
                     <div class="xl:col-span-8">
                         <div class="glass-card rounded-3xl p-6">
                             <div class="flex items-center justify-between mb-7">
-                                <h3 class="text-3xl font-black text-gradient">
-                                    <i class="fa-solid fa-brain mr-3"></i>SHAP洞察中心
-                                </h3>
+                                <h3 class="text-3xl font-black text-gradient"><i class="fa-solid fa-brain mr-3"></i>SHAP洞察中心</h3>
                                 <button id="refresh-top-feature-btn" class="px-5 py-3 rounded-full bg-slate-800 border border-white/10 hover:bg-slate-700 transition font-bold">
                                     刷新特征重要性
                                 </button>
                             </div>
-
                             <div id="top-feature-cards" class="grid grid-cols-1 md:grid-cols-2 gap-5">
                                 <div class="text-slate-400">正在加载...</div>
                             </div>
@@ -646,29 +588,21 @@
             </section>
         </main>
 
-        <!-- 收藏弹窗 -->
         <div id="favorites-modal" class="modal-mask">
             <div class="modal-panel glass-card-strong rounded-3xl p-7 max-w-3xl w-full max-h-[80vh] overflow-y-auto custom-scroll">
                 <div class="flex justify-between items-center mb-6">
                     <h3 class="text-3xl font-black">我的收藏</h3>
-                    <button id="close-favorites-btn" class="w-10 h-10 rounded-full bg-slate-800 hover:bg-slate-700 transition">
-                        <i class="fa-solid fa-xmark"></i>
-                    </button>
+                    <button id="close-favorites-btn" class="w-10 h-10 rounded-full bg-slate-800 hover:bg-slate-700 transition"><i class="fa-solid fa-xmark"></i></button>
                 </div>
-                <div id="favorites-list" class="space-y-4 text-slate-300">
-                    暂无收藏球员。
-                </div>
+                <div id="favorites-list" class="space-y-4 text-slate-300">暂无收藏球员。</div>
             </div>
         </div>
 
-        <!-- 说明弹窗 -->
         <div id="guide-modal" class="modal-mask">
             <div class="modal-panel glass-card-strong rounded-3xl p-7 max-w-3xl w-full">
                 <div class="flex justify-between items-center mb-6">
                     <h3 class="text-3xl font-black">系统说明</h3>
-                    <button id="close-guide-btn" class="w-10 h-10 rounded-full bg-slate-800 hover:bg-slate-700 transition">
-                        <i class="fa-solid fa-xmark"></i>
-                    </button>
+                    <button id="close-guide-btn" class="w-10 h-10 rounded-full bg-slate-800 hover:bg-slate-700 transition"><i class="fa-solid fa-xmark"></i></button>
                 </div>
                 <div class="space-y-4 text-slate-300 leading-8">
                     <p>本系统基于 1996-2025 赛季 NBA 球员数据，观察球员新秀期前 1-3 年表现，并结合后续完整生涯轨迹进行建模。</p>
@@ -683,9 +617,6 @@
     </div>
 
     <script>
-        // ======================================================
-        // API 配置
-        // ======================================================
         const API_BASE =
             window.location.protocol === "file:" ||
             window.location.port === "5500" ||
@@ -718,9 +649,6 @@
             return await res.json();
         }
 
-        // ======================================================
-        // 特征中文映射
-        // ======================================================
         const FEATURE_NAME_MAP = {
             "window_years": "新秀观察窗口",
             "age_mean": "平均年龄",
@@ -758,10 +686,51 @@
             return FEATURE_NAME_MAP[featureName] || featureName;
         }
 
-        // ======================================================
-        // 球员中文别名
-        // ======================================================
         const PLAYER_CN_ALIAS_MAP = {
+            "班凯罗": "Paolo Banchero",
+            "保罗班凯罗": "Paolo Banchero",
+            "保罗·班凯罗": "Paolo Banchero",
+            "班切罗": "Paolo Banchero",
+
+            "杰伦威廉姆斯": "Jalen Williams",
+            "杰伦·威廉姆斯": "Jalen Williams",
+            "杰威": "Jalen Williams",
+            "老八": "Jalen Williams",
+
+            "基根穆雷": "Keegan Murray",
+            "基根·穆雷": "Keegan Murray",
+
+            "贾巴里史密斯": "Jabari Smith Jr.",
+            "贾巴里·史密斯": "Jabari Smith Jr.",
+            "小史密斯": "Jabari Smith Jr.",
+
+            "沃克凯斯勒": "Walker Kessler",
+            "沃克·凯斯勒": "Walker Kessler",
+            "凯斯勒": "Walker Kessler",
+
+            "杰伦杜伦": "Jalen Duren",
+            "杰伦·杜伦": "Jalen Duren",
+            "杜伦": "Jalen Duren",
+
+            "马瑟林": "Bennedict Mathurin",
+            "本尼迪克特马瑟林": "Bennedict Mathurin",
+            "本尼迪克特·马瑟林": "Bennedict Mathurin",
+
+            "谢登夏普": "Shaedon Sharpe",
+            "谢登·夏普": "Shaedon Sharpe",
+            "夏普": "Shaedon Sharpe",
+
+            "艾维": "Jaden Ivey",
+            "杰登艾维": "Jaden Ivey",
+            "杰登·艾维": "Jaden Ivey",
+
+            "索汉": "Jeremy Sochan",
+            "杰里米索汉": "Jeremy Sochan",
+            "杰里米·索汉": "Jeremy Sochan",
+
+            "戴森丹尼尔斯": "Dyson Daniels",
+            "戴森·丹尼尔斯": "Dyson Daniels",
+
             "文班亚马": "Victor Wembanyama",
             "维克托文班亚马": "Victor Wembanyama",
             "维克托·文班亚马": "Victor Wembanyama",
@@ -772,63 +741,21 @@
             "切特霍姆格伦": "Chet Holmgren",
             "切特·霍姆格伦": "Chet Holmgren",
 
-            "班凯罗": "Paolo Banchero",
-            "保罗班凯罗": "Paolo Banchero",
-            "保罗·班凯罗": "Paolo Banchero",
-
             "布兰登米勒": "Brandon Miller",
             "布兰登·米勒": "Brandon Miller",
-
-            "小史密斯": "Jabari Smith Jr.",
-            "贾巴里史密斯": "Jabari Smith Jr.",
-            "贾巴里·史密斯": "Jabari Smith Jr.",
-
-            "杰伦威廉姆斯": "Jalen Williams",
-            "杰伦·威廉姆斯": "Jalen Williams",
-
-            "基根穆雷": "Keegan Murray",
-            "基根·穆雷": "Keegan Murray",
-
-            "沃克凯斯勒": "Walker Kessler",
-            "沃克·凯斯勒": "Walker Kessler",
-            "凯斯勒": "Walker Kessler",
-
             "斯库特": "Scoot Henderson",
             "亨德森": "Scoot Henderson",
-            "斯库特亨德森": "Scoot Henderson",
-
-            "阿门汤普森": "Amen Thompson",
-            "阿门·汤普森": "Amen Thompson",
-            "奥萨尔汤普森": "Ausar Thompson",
-            "奥萨尔·汤普森": "Ausar Thompson",
-
-            "莱夫利": "Dereck Lively II",
-            "德雷克莱夫利": "Dereck Lively II",
-            "德雷克·莱夫利": "Dereck Lively II",
-
-            "卡森华莱士": "Cason Wallace",
-            "卡森·华莱士": "Cason Wallace",
-
-            "哈克斯": "Jaime Jaquez Jr.",
-            "海梅哈克斯": "Jaime Jaquez Jr.",
-            "海梅·哈克斯": "Jaime Jaquez Jr."
+            "斯库特亨德森": "Scoot Henderson"
         };
 
-        // ======================================================
-        // 全局状态
-        // ======================================================
         let allPlayers = [];
         let currentPlayer = null;
         let favorites = JSON.parse(localStorage.getItem("nba_rookie_favorites") || "[]");
-
         let comparePlayerAName = "";
         let comparePlayerBName = "";
         let compareRadarChart = null;
         let playerRadarChart = null;
 
-        // ======================================================
-        // 通用工具
-        // ======================================================
         function showToast(message, type = "info") {
             const wrap = document.getElementById("toast-wrap");
             const colorMap = {
@@ -837,12 +764,10 @@
                 warning: "border-yellow-400/30 bg-yellow-500/12 text-yellow-200",
                 info: "border-blue-400/30 bg-blue-500/12 text-blue-200"
             };
-
             const item = document.createElement("div");
             item.className = `toast px-5 py-3 rounded-2xl border backdrop-blur-xl ${colorMap[type] || colorMap.info}`;
             item.textContent = message;
             wrap.appendChild(item);
-
             setTimeout(() => item.remove(), 2600);
         }
 
@@ -870,7 +795,7 @@
         }
 
         function getPlayerStage(player) {
-            return player.analysis_stage || player.primary_result_type || "";
+            return player.analysis_stage || player.primary_result_type || player.stage || "";
         }
 
         function getPrimaryLabel(player) {
@@ -880,15 +805,11 @@
         function levenshteinDistance(a, b) {
             a = normalizeSearchText(a);
             b = normalizeSearchText(b);
-
             if (!a) return b.length;
             if (!b) return a.length;
-
             const matrix = Array.from({ length: a.length + 1 }, () => []);
-
             for (let i = 0; i <= a.length; i++) matrix[i][0] = i;
             for (let j = 0; j <= b.length; j++) matrix[0][j] = j;
-
             for (let i = 1; i <= a.length; i++) {
                 for (let j = 1; j <= b.length; j++) {
                     const cost = a[i - 1] === b[j - 1] ? 0 : 1;
@@ -899,8 +820,49 @@
                     );
                 }
             }
-
             return matrix[a.length][b.length];
+        }
+
+        function getRookieStartSeason(player) {
+            const raw = String(
+                player.rookie_start_season ||
+                player.start_season ||
+                player.first_season ||
+                player.season_year ||
+                ""
+            );
+            const match = raw.match(/20\d{2}|19\d{2}/);
+            if (!match) return null;
+            return Number(match[0]);
+        }
+
+        function isPreferred2022Class(player) {
+            return getRookieStartSeason(player) === 2022;
+        }
+
+        function isThreeYearFormalPlayer(player) {
+            const windowYears = Number(
+                player.window_years ||
+                player.observed_years ||
+                player.years_observed ||
+                player.rookie_window_years ||
+                0
+            );
+
+            const stage = String(
+                player.analysis_stage ||
+                player.primary_result_type ||
+                player.stage ||
+                ""
+            );
+
+            return (
+                windowYears >= 3 ||
+                stage.includes("正式") ||
+                stage.includes("三年") ||
+                stage.toLowerCase().includes("window=3") ||
+                stage.toLowerCase().includes("window 3")
+            );
         }
 
         function scorePlayerByQuery(player, rawQuery) {
@@ -910,7 +872,6 @@
 
             const englishName = getPlayerEnglishName(player);
             const displayName = getPlayerDisplayName(player);
-
             const en = normalizeSearchText(englishName);
             const cn = normalizeSearchText(displayName);
 
@@ -933,20 +894,13 @@
             if (en.includes(q)) score += 50;
             if (cn.includes(q)) score += 50;
 
-            const initials = englishName
-                .split(/\s+/)
-                .filter(Boolean)
-                .map(w => w[0])
-                .join("")
-                .toLowerCase();
-
+            const initials = englishName.split(/\s+/).filter(Boolean).map(w => w[0]).join("").toLowerCase();
             if (initials === q) score += 45;
             if (initials.startsWith(q)) score += 30;
 
             const d1 = levenshteinDistance(q, en);
             const d2 = levenshteinDistance(q, cn);
             const minDistance = Math.min(d1, d2);
-
             if (minDistance <= 1) score += 35;
             else if (minDistance <= 2) score += 22;
             else if (minDistance <= 3 && q.length >= 5) score += 12;
@@ -954,13 +908,31 @@
             return score;
         }
 
-        function searchPlayers(query, limit = 8) {
+        function getCompareCandidatePool() {
             if (!Array.isArray(allPlayers)) return [];
+            const formalPlayers = allPlayers.filter(isThreeYearFormalPlayer);
+            const basePool = formalPlayers.length >= 10 ? formalPlayers : allPlayers;
+            return [...basePool].sort((a, b) => {
+                const a2022 = isPreferred2022Class(a) ? 1 : 0;
+                const b2022 = isPreferred2022Class(b) ? 1 : 0;
+                const aw = Number(a.window_years || 0);
+                const bw = Number(b.window_years || 0);
+                return (b2022 - a2022) || (bw - aw);
+            });
+        }
 
-            return allPlayers
+        function searchPlayers(query, limit = 8) {
+            const pool = getCompareCandidatePool();
+            return pool
                 .map(player => ({ player, score: scorePlayerByQuery(player, query) }))
                 .filter(item => item.score > 0)
-                .sort((a, b) => b.score - a.score)
+                .sort((a, b) => {
+                    const aFormal = isThreeYearFormalPlayer(a.player) ? 1 : 0;
+                    const bFormal = isThreeYearFormalPlayer(b.player) ? 1 : 0;
+                    const a2022 = isPreferred2022Class(a.player) ? 1 : 0;
+                    const b2022 = isPreferred2022Class(b.player) ? 1 : 0;
+                    return (bFormal - aFormal) || (b2022 - a2022) || (b.score - a.score);
+                })
                 .slice(0, limit)
                 .map(item => item.player);
         }
@@ -970,9 +942,6 @@
             return results.length ? results[0] : null;
         }
 
-        // ======================================================
-        // 页面路由
-        // ======================================================
         function hideAllScreens() {
             document.getElementById("landing-screen")?.classList.add("hidden");
             document.getElementById("feature-hub")?.classList.add("hidden");
@@ -1001,18 +970,13 @@
                 openFavorites();
                 return;
             }
-
             hideAllScreens();
-
             const shell = document.getElementById("workspace-shell");
             shell.classList.remove("hidden");
             shell.classList.add("screen-enter");
-
-            if (moduleName === "predict") {
-                document.getElementById("predict-page").classList.remove("hidden");
-            } else if (moduleName === "compare") {
-                document.getElementById("compare-page").classList.remove("hidden");
-            } else if (moduleName === "insight") {
+            if (moduleName === "predict") document.getElementById("predict-page").classList.remove("hidden");
+            if (moduleName === "compare") document.getElementById("compare-page").classList.remove("hidden");
+            if (moduleName === "insight") {
                 document.getElementById("insight-page").classList.remove("hidden");
                 loadFeatureImportance();
             }
@@ -1022,27 +986,18 @@
             document.getElementById("enter-system-btn")?.addEventListener("click", showFeatureHub);
             document.getElementById("back-landing-btn")?.addEventListener("click", showLandingScreen);
             document.getElementById("landing-guide-btn")?.addEventListener("click", openGuide);
-
-            document.querySelectorAll(".module-card").forEach(card => {
-                card.addEventListener("click", () => openModule(card.dataset.module));
-            });
+            document.querySelectorAll(".module-card").forEach(card => card.addEventListener("click", () => openModule(card.dataset.module)));
         }
 
-        // ======================================================
-        // 数据加载
-        // ======================================================
         async function loadHealth() {
             try {
                 const data = await apiGet("/api/health");
-
                 const status = data.status === "ok" ? "正常运行" : "异常";
                 const windows = Array.isArray(data.windows_loaded) ? data.windows_loaded.join(", ") : "-";
-
                 document.getElementById("status-text").textContent = status;
                 document.getElementById("window-text").textContent = windows;
                 document.getElementById("rookie-count").textContent = data.rookie_rows ?? "-";
                 document.getElementById("veteran-count").textContent = data.veteran_rows ?? "-";
-
                 document.getElementById("insight-status-text").textContent = status;
                 document.getElementById("insight-window-text").textContent = windows;
                 document.getElementById("insight-rookie-count").textContent = data.rookie_rows ?? "-";
@@ -1057,7 +1012,6 @@
         async function loadPlayersData() {
             try {
                 allPlayers = await apiGet("/api/rookies");
-
                 const select = document.getElementById("player-select");
                 if (select) {
                     select.innerHTML = `<option value="">请选择球员</option>`;
@@ -1075,20 +1029,14 @@
         }
 
         async function loadFeatureImportance() {
-            const containers = [
-                document.getElementById("feature-list"),
-                document.getElementById("insight-feature-list")
-            ].filter(Boolean);
-
+            const containers = [document.getElementById("feature-list"), document.getElementById("insight-feature-list")].filter(Boolean);
             const topCards = document.getElementById("top-feature-cards");
-
             containers.forEach(c => c.innerHTML = `<div class="text-slate-400">正在加载 SHAP 特征重要性...</div>`);
             if (topCards) topCards.innerHTML = `<div class="text-slate-400">正在加载...</div>`;
 
             try {
                 const data = await apiGet("/api/feature-importance");
                 const features = data.top_features || [];
-
                 if (!features.length) {
                     containers.forEach(c => c.innerHTML = `<div class="text-slate-400">暂无 SHAP 特征重要性数据</div>`);
                     if (topCards) topCards.innerHTML = `<div class="text-slate-400">暂无数据</div>`;
@@ -1099,20 +1047,16 @@
                     container.innerHTML = "";
                     features.slice(0, 10).forEach(item => {
                         const val = Number(item.importance || 0);
-                        const cnName = featureNameCn(item.feature);
-
                         const row = document.createElement("div");
                         row.innerHTML = `
                             <div class="flex justify-between items-center mb-2">
                                 <div>
-                                    <span class="font-bold text-white">${cnName}</span>
+                                    <span class="font-bold text-white">${featureNameCn(item.feature)}</span>
                                     <span class="ml-2 text-xs text-slate-500">${item.feature}</span>
                                 </div>
                                 <span class="text-emerald-300 font-bold">${val.toFixed(4)}</span>
                             </div>
-                            <div class="feature-bar">
-                                <span style="width:${Math.min(100, val * 380)}%"></span>
-                            </div>
+                            <div class="feature-bar"><span style="width:${Math.min(100, val * 380)}%"></span></div>
                         `;
                         container.appendChild(row);
                     });
@@ -1140,9 +1084,6 @@
             }
         }
 
-        // ======================================================
-        // 预测模块
-        // ======================================================
         async function fetchPlayerPrediction(playerName) {
             return await apiPost("/api/predict", { player_name: playerName });
         }
@@ -1150,11 +1091,7 @@
         function initPredictModule() {
             document.getElementById("predict-search-btn")?.addEventListener("click", async () => {
                 const q = document.getElementById("predict-search-input").value.trim();
-                if (!q) {
-                    showToast("请输入球员姓名", "warning");
-                    return;
-                }
-
+                if (!q) return showToast("请输入球员姓名", "warning");
                 try {
                     const player = await fetchPlayerPrediction(q);
                     renderPlayerDetail(player);
@@ -1166,14 +1103,11 @@
             });
 
             document.getElementById("predict-search-input")?.addEventListener("keydown", e => {
-                if (e.key === "Enter") {
-                    document.getElementById("predict-search-btn").click();
-                }
+                if (e.key === "Enter") document.getElementById("predict-search-btn").click();
             });
 
             document.getElementById("player-select")?.addEventListener("change", async e => {
                 if (!e.target.value) return;
-
                 try {
                     const player = await fetchPlayerPrediction(e.target.value);
                     renderPlayerDetail(player);
@@ -1187,43 +1121,50 @@
 
         function renderPlayerDetail(player) {
             currentPlayer = player;
-
             document.getElementById("player-empty").classList.add("hidden");
             document.getElementById("player-detail").classList.remove("hidden");
-
             const name = player.player_name_cn || player.player_name || "-";
-            const en = player.player_name || "-";
-
             document.getElementById("player-name").textContent = name;
-            document.getElementById("player-name-en").textContent = en;
+            document.getElementById("player-name-en").textContent = player.player_name || "-";
             document.getElementById("player-stage").textContent = player.analysis_stage || "未知阶段";
             document.getElementById("player-secondary").textContent = player.pred_secondary_label || "暂无画像";
             document.getElementById("player-primary").textContent = getPrimaryLabel(player);
             document.getElementById("player-note").textContent = player.primary_result_note || "";
-
             const score = Number(player.potential_score || 0);
             document.getElementById("potential-score").textContent = Math.round(score);
             document.getElementById("score-ring").style.setProperty("--pct", Math.max(0, Math.min(100, score)));
-
             document.getElementById("m-age").textContent = formatNumber(player.newbie_age || player.age_mean);
             document.getElementById("m-points").textContent = formatNumber(player.points_per36 || player.early_avg_score);
             document.getElementById("m-per").textContent = formatNumber(player.per || player.per_mean);
             document.getElementById("m-ts").textContent = `${formatNumber(player.ts_percent || player.true_shooting_pct)}%`;
             document.getElementById("player-report").textContent = player.report || "暂无综合报告。";
-
             renderPlayerRadar(player);
             renderSimilarPlayers(player.similar_players || []);
             renderPlayerShap(player);
         }
 
+        function buildRadarOptions() {
+            return {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { labels: { color: "#e5e7eb", font: { size: 14, weight: "bold" } } } },
+                scales: {
+                    r: {
+                        min: 0,
+                        max: 100,
+                        ticks: { color: "#94a3b8", backdropColor: "transparent" },
+                        grid: { color: "rgba(148, 163, 184, 0.18)" },
+                        angleLines: { color: "rgba(148, 163, 184, 0.18)" },
+                        pointLabels: { color: "#e5e7eb", font: { size: 13, weight: "bold" } }
+                    }
+                }
+            };
+        }
+
         function renderPlayerRadar(player) {
             const canvas = document.getElementById("player-radar-chart");
             if (!canvas || typeof Chart === "undefined") return;
-
-            if (playerRadarChart) {
-                playerRadarChart.destroy();
-            }
-
+            if (playerRadarChart) playerRadarChart.destroy();
             playerRadarChart = new Chart(canvas.getContext("2d"), {
                 type: "radar",
                 data: {
@@ -1245,12 +1186,10 @@
         function renderSimilarPlayers(players) {
             const wrap = document.getElementById("similar-players");
             wrap.innerHTML = "";
-
             if (!players.length) {
                 wrap.innerHTML = `<div class="text-slate-400">暂无相似模板。</div>`;
                 return;
             }
-
             players.slice(0, 4).forEach(p => {
                 const card = document.createElement("div");
                 card.className = "bg-slate-950/50 border border-white/10 rounded-2xl p-5";
@@ -1260,9 +1199,7 @@
                             <div class="text-xl font-black">${p.name || "未知球员"}</div>
                             <div class="text-sm text-slate-400 mt-1">${p.type || "未知类型"} · ${p.sub_type || "未知画像"}</div>
                         </div>
-                        <div class="px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-400/20 text-emerald-300 font-bold">
-                            ${formatNumber(p.similarity)}%
-                        </div>
+                        <div class="px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-400/20 text-emerald-300 font-bold">${formatNumber(p.similarity)}%</div>
                     </div>
                     <p class="text-slate-400 leading-7 mt-4">${p.report || ""}</p>
                 `;
@@ -1273,7 +1210,6 @@
         function renderPlayerShap(player) {
             const img = document.getElementById("player-shap-img");
             const empty = document.getElementById("player-shap-empty");
-
             if (player.primary_shap_plot) {
                 img.src = `${API_BASE}${player.primary_shap_plot}`;
                 img.classList.remove("hidden");
@@ -1284,21 +1220,15 @@
             }
         }
 
-        // ======================================================
-        // 对比模块：中英文模糊搜索
-        // ======================================================
         function renderCompareSearchResults(target, query) {
             const resultBox = document.getElementById(`compare-result-${target}`);
             if (!resultBox) return;
-
             const results = searchPlayers(query);
-
             if (!query.trim()) {
                 resultBox.classList.add("hidden");
                 resultBox.innerHTML = "";
                 return;
             }
-
             if (results.length === 0) {
                 resultBox.classList.remove("hidden");
                 resultBox.innerHTML = `
@@ -1315,45 +1245,46 @@
                 const en = getPlayerEnglishName(player);
                 const cn = getPlayerDisplayName(player);
                 const stage = getPlayerStage(player);
-
+                const formal = isThreeYearFormalPlayer(player);
+                const is2022 = isPreferred2022Class(player);
+                const badges = [];
+                if (formal) badges.push(`<span class="compare-result-badge">三年窗口</span>`);
+                if (is2022) badges.push(`<span class="compare-result-badge">2022届</span>`);
                 return `
                     <div class="compare-result-item" data-target="${target}" data-player="${en}">
                         <div class="compare-result-main">${cn || en}</div>
                         <div class="compare-result-sub">${en}${stage ? " · " + stage : ""}</div>
+                        <div class="flex gap-2 mt-2">${badges.join("")}</div>
                     </div>
                 `;
             }).join("");
 
             resultBox.querySelectorAll(".compare-result-item[data-player]").forEach(item => {
-                item.addEventListener("click", () => {
-                    selectComparePlayer(target, item.dataset.player);
-                });
+                item.addEventListener("click", () => selectComparePlayer(target, item.dataset.player));
             });
         }
 
         function selectComparePlayer(target, playerName) {
             const player = allPlayers.find(p => getPlayerEnglishName(p) === playerName);
             if (!player) return;
-
             const cn = getPlayerDisplayName(player);
             const en = getPlayerEnglishName(player);
             const stage = getPlayerStage(player);
-
+            const suffix = `${stage ? " · " + stage : ""}${isPreferred2022Class(player) ? " · 2022届" : ""}${isThreeYearFormalPlayer(player) ? " · 三年窗口" : ""}`;
             if (target === "a") {
                 comparePlayerAName = en;
                 document.getElementById("compare-search-a").value = cn || en;
                 const selected = document.getElementById("compare-selected-a");
                 selected.classList.remove("hidden");
-                selected.textContent = `已选择：${cn || en}${stage ? " · " + stage : ""}`;
+                selected.textContent = `已选择：${cn || en}${suffix}`;
                 document.getElementById("compare-result-a").classList.add("hidden");
             }
-
             if (target === "b") {
                 comparePlayerBName = en;
                 document.getElementById("compare-search-b").value = cn || en;
                 const selected = document.getElementById("compare-selected-b");
                 selected.classList.remove("hidden");
-                selected.textContent = `已选择：${cn || en}${stage ? " · " + stage : ""}`;
+                selected.textContent = `已选择：${cn || en}${suffix}`;
                 document.getElementById("compare-result-b").classList.add("hidden");
             }
         }
@@ -1361,31 +1292,22 @@
         function initCompareSearchInputs() {
             const inputA = document.getElementById("compare-search-a");
             const inputB = document.getElementById("compare-search-b");
-
             if (inputA) {
                 inputA.addEventListener("input", e => {
                     comparePlayerAName = "";
                     document.getElementById("compare-selected-a")?.classList.add("hidden");
                     renderCompareSearchResults("a", e.target.value);
                 });
-
-                inputA.addEventListener("focus", e => {
-                    renderCompareSearchResults("a", e.target.value);
-                });
+                inputA.addEventListener("focus", e => renderCompareSearchResults("a", e.target.value));
             }
-
             if (inputB) {
                 inputB.addEventListener("input", e => {
                     comparePlayerBName = "";
                     document.getElementById("compare-selected-b")?.classList.add("hidden");
                     renderCompareSearchResults("b", e.target.value);
                 });
-
-                inputB.addEventListener("focus", e => {
-                    renderCompareSearchResults("b", e.target.value);
-                });
+                inputB.addEventListener("focus", e => renderCompareSearchResults("b", e.target.value));
             }
-
             document.addEventListener("click", e => {
                 if (!e.target.closest(".compare-search-box")) {
                     document.getElementById("compare-result-a")?.classList.add("hidden");
@@ -1399,12 +1321,10 @@
                 btn.addEventListener("click", () => {
                     const playerA = findBestPlayerByName(btn.dataset.a);
                     const playerB = findBestPlayerByName(btn.dataset.b);
-
                     if (!playerA || !playerB) {
                         showToast("推荐组合中有球员不在当前数据集中，请手动搜索其他球员", "warning");
                         return;
                     }
-
                     selectComparePlayer("a", getPlayerEnglishName(playerA));
                     selectComparePlayer("b", getPlayerEnglishName(playerB));
                 });
@@ -1414,27 +1334,16 @@
         function initPlayerComparison() {
             initCompareSearchInputs();
             initQuickCompareButtons();
-
             const compareBtn = document.getElementById("compare-btn");
             if (!compareBtn) return;
-
             compareBtn.addEventListener("click", async () => {
-                if (!comparePlayerAName || !comparePlayerBName) {
-                    showToast("请先搜索并选择两名球员", "warning");
-                    return;
-                }
-
-                if (comparePlayerAName === comparePlayerBName) {
-                    showToast("请选择两名不同的球员", "warning");
-                    return;
-                }
-
+                if (!comparePlayerAName || !comparePlayerBName) return showToast("请先搜索并选择两名球员", "warning");
+                if (comparePlayerAName === comparePlayerBName) return showToast("请选择两名不同的球员", "warning");
                 try {
                     const result = await apiPost("/api/players/compare", {
                         player_name_a: comparePlayerAName,
                         player_name_b: comparePlayerBName
                     });
-
                     renderPlayerComparison(result.player_a, result.player_b);
                     document.getElementById("comparison-empty")?.classList.add("hidden");
                     document.getElementById("comparison-view")?.classList.remove("hidden");
@@ -1447,15 +1356,10 @@
         }
 
         function renderPlayerComparison(playerA, playerB) {
-            const nameA = playerA.player_name_cn || playerA.player_name || "球员A";
-            const nameB = playerB.player_name_cn || playerB.player_name || "球员B";
-
-            document.getElementById("compare-a-name").textContent = nameA;
-            document.getElementById("compare-b-name").textContent = nameB;
-
+            document.getElementById("compare-a-name").textContent = playerA.player_name_cn || playerA.player_name || "球员A";
+            document.getElementById("compare-b-name").textContent = playerB.player_name_cn || playerB.player_name || "球员B";
             document.getElementById("compare-a-info").innerHTML = buildCompareInfoHtml(playerA);
             document.getElementById("compare-b-info").innerHTML = buildCompareInfoHtml(playerB);
-
             renderCompareRadarChart(playerA, playerB);
         }
 
@@ -1471,55 +1375,10 @@
             `;
         }
 
-        function buildRadarOptions() {
-            return {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        labels: {
-                            color: "#e5e7eb",
-                            font: {
-                                size: 14,
-                                weight: "bold"
-                            }
-                        }
-                    }
-                },
-                scales: {
-                    r: {
-                        min: 0,
-                        max: 100,
-                        ticks: {
-                            color: "#94a3b8",
-                            backdropColor: "transparent"
-                        },
-                        grid: {
-                            color: "rgba(148, 163, 184, 0.18)"
-                        },
-                        angleLines: {
-                            color: "rgba(148, 163, 184, 0.18)"
-                        },
-                        pointLabels: {
-                            color: "#e5e7eb",
-                            font: {
-                                size: 13,
-                                weight: "bold"
-                            }
-                        }
-                    }
-                }
-            };
-        }
-
         function renderCompareRadarChart(playerA, playerB) {
             const canvas = document.getElementById("compare-radar-chart");
             if (!canvas || typeof Chart === "undefined") return;
-
-            if (compareRadarChart) {
-                compareRadarChart.destroy();
-            }
-
+            if (compareRadarChart) compareRadarChart.destroy();
             compareRadarChart = new Chart(canvas.getContext("2d"), {
                 type: "radar",
                 data: {
@@ -1549,19 +1408,12 @@
             });
         }
 
-        // ======================================================
-        // 收藏与说明
-        // ======================================================
         function updateFavoriteCount() {
             document.getElementById("favorite-count").textContent = favorites.length;
         }
 
         function addCurrentFavorite() {
-            if (!currentPlayer) {
-                showToast("请先选择球员", "warning");
-                return;
-            }
-
+            if (!currentPlayer) return showToast("请先选择球员", "warning");
             const en = currentPlayer.player_name;
             if (!favorites.includes(en)) {
                 favorites.push(en);
@@ -1576,19 +1428,15 @@
         function openFavorites() {
             const modal = document.getElementById("favorites-modal");
             const list = document.getElementById("favorites-list");
-
             if (!favorites.length) {
                 list.innerHTML = "暂无收藏球员。";
             } else {
                 list.innerHTML = favorites.map(name => `
                     <div class="flex items-center justify-between bg-slate-950/50 border border-white/10 rounded-2xl p-4">
                         <span class="font-bold">${name}</span>
-                        <button class="favorite-open-btn px-4 py-2 rounded-full bg-emerald-500/10 border border-emerald-400/20 text-emerald-300" data-name="${name}">
-                            查看
-                        </button>
+                        <button class="favorite-open-btn px-4 py-2 rounded-full bg-emerald-500/10 border border-emerald-400/20 text-emerald-300" data-name="${name}">查看</button>
                     </div>
                 `).join("");
-
                 list.querySelectorAll(".favorite-open-btn").forEach(btn => {
                     btn.addEventListener("click", async () => {
                         modal.style.display = "none";
@@ -1602,7 +1450,6 @@
                     });
                 });
             }
-
             modal.style.display = "flex";
         }
 
@@ -1612,24 +1459,12 @@
 
         function initModals() {
             document.getElementById("open-favorites-btn")?.addEventListener("click", openFavorites);
-            document.getElementById("close-favorites-btn")?.addEventListener("click", () => {
-                document.getElementById("favorites-modal").style.display = "none";
-            });
-
+            document.getElementById("close-favorites-btn")?.addEventListener("click", () => document.getElementById("favorites-modal").style.display = "none");
             document.getElementById("open-guide-btn")?.addEventListener("click", openGuide);
-            document.getElementById("close-guide-btn")?.addEventListener("click", () => {
-                document.getElementById("guide-modal").style.display = "none";
-            });
-
+            document.getElementById("close-guide-btn")?.addEventListener("click", () => document.getElementById("guide-modal").style.display = "none");
             document.getElementById("add-favorite-btn")?.addEventListener("click", addCurrentFavorite);
-
-            document.getElementById("favorites-modal")?.addEventListener("click", e => {
-                if (e.target.id === "favorites-modal") e.currentTarget.style.display = "none";
-            });
-
-            document.getElementById("guide-modal")?.addEventListener("click", e => {
-                if (e.target.id === "guide-modal") e.currentTarget.style.display = "none";
-            });
+            document.getElementById("favorites-modal")?.addEventListener("click", e => { if (e.target.id === "favorites-modal") e.currentTarget.style.display = "none"; });
+            document.getElementById("guide-modal")?.addEventListener("click", e => { if (e.target.id === "guide-modal") e.currentTarget.style.display = "none"; });
         }
 
         function initFeatureButtons() {
@@ -1638,35 +1473,14 @@
             document.getElementById("refresh-top-feature-btn")?.addEventListener("click", loadFeatureImportance);
         }
 
-        // ======================================================
         // 物理粒子背景
-        // ======================================================
         (function () {
             const canvas = document.getElementById("bg-particles");
             if (!canvas) return;
-
             const ctx = canvas.getContext("2d");
-            let width = 0;
-            let height = 0;
-            let particles = [];
-            let shockwaves = [];
-
-            const mouse = {
-                x: null,
-                y: null,
-                active: false
-            };
-
-            const SETTINGS = {
-                count: 46,
-                linkDistance: 145,
-                mouseRadius: 150,
-                friction: 0.985,
-                maxSpeed: 1.15,
-                baseSpeed: 0.22,
-                glow: 10
-            };
-
+            let width = 0, height = 0, particles = [], shockwaves = [];
+            const mouse = { x: null, y: null, active: false };
+            const SETTINGS = { count: 46, linkDistance: 145, mouseRadius: 150, friction: 0.985, maxSpeed: 1.15, baseSpeed: 0.22, glow: 10 };
             const PALETTE = [
                 { fill: "rgba(16,185,129,0.55)", line: "rgba(16,185,129," },
                 { fill: "rgba(59,130,246,0.50)", line: "rgba(59,130,246," },
@@ -1674,235 +1488,99 @@
                 { fill: "rgba(245,158,11,0.38)", line: "rgba(245,158,11," },
                 { fill: "rgba(255,255,255,0.28)", line: "rgba(255,255,255," }
             ];
-
-            function rand(min, max) {
-                return Math.random() * (max - min) + min;
-            }
-
+            function rand(min, max) { return Math.random() * (max - min) + min; }
             function resize() {
                 const dpr = Math.min(window.devicePixelRatio || 1, 2);
-                width = window.innerWidth;
-                height = window.innerHeight;
-
-                canvas.width = width * dpr;
-                canvas.height = height * dpr;
-                canvas.style.width = width + "px";
-                canvas.style.height = height + "px";
-
+                width = window.innerWidth; height = window.innerHeight;
+                canvas.width = width * dpr; canvas.height = height * dpr;
+                canvas.style.width = width + "px"; canvas.style.height = height + "px";
                 ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
                 createParticles();
             }
-
             function createParticles() {
                 particles = [];
                 const count = Math.min(SETTINGS.count, Math.floor((width * height) / 26000));
-
                 for (let i = 0; i < count; i++) {
                     const color = PALETTE[Math.floor(Math.random() * PALETTE.length)];
-                    particles.push({
-                        x: rand(0, width),
-                        y: rand(0, height),
-                        vx: rand(-SETTINGS.baseSpeed, SETTINGS.baseSpeed),
-                        vy: rand(-SETTINGS.baseSpeed, SETTINGS.baseSpeed),
-                        r: rand(1.3, 3.2),
-                        mass: rand(0.8, 1.8),
-                        color,
-                        phase: rand(0, Math.PI * 2)
-                    });
+                    particles.push({ x: rand(0, width), y: rand(0, height), vx: rand(-SETTINGS.baseSpeed, SETTINGS.baseSpeed), vy: rand(-SETTINGS.baseSpeed, SETTINGS.baseSpeed), r: rand(1.3, 3.2), mass: rand(0.8, 1.8), color, phase: rand(0, Math.PI * 2) });
                 }
             }
-
             function applyMouseForce(p) {
                 if (!mouse.active || mouse.x === null || mouse.y === null) return;
-
-                const dx = p.x - mouse.x;
-                const dy = p.y - mouse.y;
-                const dist = Math.sqrt(dx * dx + dy * dy);
-
+                const dx = p.x - mouse.x, dy = p.y - mouse.y, dist = Math.sqrt(dx * dx + dy * dy);
                 if (dist > 0 && dist < SETTINGS.mouseRadius) {
                     const force = (1 - dist / SETTINGS.mouseRadius) * 0.045;
                     p.vx += (dx / dist) * force / p.mass;
                     p.vy += (dy / dist) * force / p.mass;
                 }
             }
-
             function applySoftCenterPull(p) {
-                const cx = width * 0.5;
-                const cy = height * 0.5;
-                const dx = cx - p.x;
-                const dy = cy - p.y;
-
-                p.vx += dx * 0.000002;
-                p.vy += dy * 0.000002;
+                const cx = width * 0.5, cy = height * 0.5;
+                p.vx += (cx - p.x) * 0.000002;
+                p.vy += (cy - p.y) * 0.000002;
             }
-
+            function updateShockwaves() {
+                shockwaves = shockwaves.map(w => ({ ...w, radius: w.radius + w.speed, alpha: w.alpha * 0.94 })).filter(w => w.alpha > 0.015);
+            }
             function updateParticles() {
                 for (const p of particles) {
-                    applyMouseForce(p);
-                    applySoftCenterPull(p);
-
+                    applyMouseForce(p); applySoftCenterPull(p);
                     p.phase += 0.008;
                     p.vx += Math.cos(p.phase) * 0.002;
                     p.vy += Math.sin(p.phase) * 0.002;
-
-                    p.vx *= SETTINGS.friction;
-                    p.vy *= SETTINGS.friction;
-
+                    p.vx *= SETTINGS.friction; p.vy *= SETTINGS.friction;
                     const speed = Math.sqrt(p.vx * p.vx + p.vy * p.vy);
-                    if (speed > SETTINGS.maxSpeed) {
-                        p.vx = (p.vx / speed) * SETTINGS.maxSpeed;
-                        p.vy = (p.vy / speed) * SETTINGS.maxSpeed;
-                    }
-
-                    p.x += p.vx;
-                    p.y += p.vy;
-
-                    if (p.x < p.r) {
-                        p.x = p.r;
-                        p.vx *= -0.82;
-                    }
-
-                    if (p.x > width - p.r) {
-                        p.x = width - p.r;
-                        p.vx *= -0.82;
-                    }
-
-                    if (p.y < p.r) {
-                        p.y = p.r;
-                        p.vy *= -0.82;
-                    }
-
-                    if (p.y > height - p.r) {
-                        p.y = height - p.r;
-                        p.vy *= -0.82;
-                    }
+                    if (speed > SETTINGS.maxSpeed) { p.vx = (p.vx / speed) * SETTINGS.maxSpeed; p.vy = (p.vy / speed) * SETTINGS.maxSpeed; }
+                    p.x += p.vx; p.y += p.vy;
+                    if (p.x < p.r) { p.x = p.r; p.vx *= -0.82; }
+                    if (p.x > width - p.r) { p.x = width - p.r; p.vx *= -0.82; }
+                    if (p.y < p.r) { p.y = p.r; p.vy *= -0.82; }
+                    if (p.y > height - p.r) { p.y = height - p.r; p.vy *= -0.82; }
                 }
-
                 updateShockwaves();
             }
-
-            function updateShockwaves() {
-                shockwaves = shockwaves
-                    .map(w => ({
-                        ...w,
-                        radius: w.radius + w.speed,
-                        alpha: w.alpha * 0.94
-                    }))
-                    .filter(w => w.alpha > 0.015);
-            }
-
             function drawLinks() {
                 for (let i = 0; i < particles.length; i++) {
                     for (let j = i + 1; j < particles.length; j++) {
-                        const a = particles[i];
-                        const b = particles[j];
-
-                        const dx = a.x - b.x;
-                        const dy = a.y - b.y;
-                        const dist = Math.sqrt(dx * dx + dy * dy);
-
+                        const a = particles[i], b = particles[j], dx = a.x - b.x, dy = a.y - b.y, dist = Math.sqrt(dx * dx + dy * dy);
                         if (dist < SETTINGS.linkDistance) {
                             const alpha = (1 - dist / SETTINGS.linkDistance) * 0.16;
-
                             const gradient = ctx.createLinearGradient(a.x, a.y, b.x, b.y);
                             gradient.addColorStop(0, `${a.color.line}${alpha})`);
                             gradient.addColorStop(1, `${b.color.line}${alpha})`);
-
-                            ctx.beginPath();
-                            ctx.moveTo(a.x, a.y);
-                            ctx.lineTo(b.x, b.y);
-                            ctx.strokeStyle = gradient;
-                            ctx.lineWidth = 0.65;
-                            ctx.stroke();
+                            ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.strokeStyle = gradient; ctx.lineWidth = 0.65; ctx.stroke();
                         }
                     }
                 }
             }
-
             function drawParticles() {
                 for (const p of particles) {
-                    ctx.save();
-                    ctx.beginPath();
-                    ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-                    ctx.shadowBlur = SETTINGS.glow;
-                    ctx.shadowColor = p.color.fill;
-                    ctx.fillStyle = p.color.fill;
-                    ctx.fill();
-                    ctx.restore();
+                    ctx.save(); ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+                    ctx.shadowBlur = SETTINGS.glow; ctx.shadowColor = p.color.fill; ctx.fillStyle = p.color.fill; ctx.fill(); ctx.restore();
                 }
             }
-
             function drawShockwaves() {
                 for (const w of shockwaves) {
-                    ctx.beginPath();
-                    ctx.arc(w.x, w.y, w.radius, 0, Math.PI * 2);
-                    ctx.strokeStyle = `rgba(16,185,129,${w.alpha})`;
-                    ctx.lineWidth = 1.2;
-                    ctx.stroke();
-
-                    ctx.beginPath();
-                    ctx.arc(w.x, w.y, w.radius * 0.62, 0, Math.PI * 2);
-                    ctx.strokeStyle = `rgba(59,130,246,${w.alpha * 0.55})`;
-                    ctx.lineWidth = 0.8;
-                    ctx.stroke();
+                    ctx.beginPath(); ctx.arc(w.x, w.y, w.radius, 0, Math.PI * 2); ctx.strokeStyle = `rgba(16,185,129,${w.alpha})`; ctx.lineWidth = 1.2; ctx.stroke();
+                    ctx.beginPath(); ctx.arc(w.x, w.y, w.radius * 0.62, 0, Math.PI * 2); ctx.strokeStyle = `rgba(59,130,246,${w.alpha * 0.55})`; ctx.lineWidth = 0.8; ctx.stroke();
                 }
             }
-
             function drawVignette() {
-                const gradient = ctx.createRadialGradient(
-                    width / 2,
-                    height / 2,
-                    Math.min(width, height) * 0.15,
-                    width / 2,
-                    height / 2,
-                    Math.max(width, height) * 0.72
-                );
-
-                gradient.addColorStop(0, "rgba(0,0,0,0)");
-                gradient.addColorStop(1, "rgba(0,0,0,0.28)");
-
-                ctx.fillStyle = gradient;
-                ctx.fillRect(0, 0, width, height);
+                const gradient = ctx.createRadialGradient(width / 2, height / 2, Math.min(width, height) * 0.15, width / 2, height / 2, Math.max(width, height) * 0.72);
+                gradient.addColorStop(0, "rgba(0,0,0,0)"); gradient.addColorStop(1, "rgba(0,0,0,0.28)");
+                ctx.fillStyle = gradient; ctx.fillRect(0, 0, width, height);
             }
-
             function render() {
                 ctx.clearRect(0, 0, width, height);
-
-                drawLinks();
-                drawParticles();
-                drawShockwaves();
-                drawVignette();
-
-                updateParticles();
-                requestAnimationFrame(render);
+                drawLinks(); drawParticles(); drawShockwaves(); drawVignette(); updateParticles(); requestAnimationFrame(render);
             }
-
             window.addEventListener("resize", resize);
-
-            window.addEventListener("mousemove", e => {
-                mouse.x = e.clientX;
-                mouse.y = e.clientY;
-                mouse.active = true;
-            });
-
-            window.addEventListener("mouseleave", () => {
-                mouse.active = false;
-            });
-
+            window.addEventListener("mousemove", e => { mouse.x = e.clientX; mouse.y = e.clientY; mouse.active = true; });
+            window.addEventListener("mouseleave", () => { mouse.active = false; });
             window.addEventListener("click", e => {
-                shockwaves.push({
-                    x: e.clientX,
-                    y: e.clientY,
-                    radius: 8,
-                    speed: 3.8,
-                    alpha: 0.34
-                });
-
+                shockwaves.push({ x: e.clientX, y: e.clientY, radius: 8, speed: 3.8, alpha: 0.34 });
                 for (const p of particles) {
-                    const dx = p.x - e.clientX;
-                    const dy = p.y - e.clientY;
-                    const dist = Math.sqrt(dx * dx + dy * dy);
-
+                    const dx = p.x - e.clientX, dy = p.y - e.clientY, dist = Math.sqrt(dx * dx + dy * dy);
                     if (dist > 0 && dist < 190) {
                         const force = (1 - dist / 190) * 1.2;
                         p.vx += (dx / dist) * force;
@@ -1910,14 +1588,9 @@
                     }
                 }
             });
-
-            resize();
-            render();
+            resize(); render();
         })();
 
-        // ======================================================
-        // 初始化
-        // ======================================================
         document.addEventListener("DOMContentLoaded", async () => {
             initScreenFlow();
             initModals();
@@ -1925,9 +1598,7 @@
             initPlayerComparison();
             initFeatureButtons();
             updateFavoriteCount();
-
             showLandingScreen();
-
             await loadHealth();
             await loadPlayersData();
             await loadFeatureImportance();
