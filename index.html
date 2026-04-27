@@ -910,14 +910,22 @@
 
         function getCompareCandidatePool() {
             if (!Array.isArray(allPlayers)) return [];
-            const formalPlayers = allPlayers.filter(isThreeYearFormalPlayer);
-            const basePool = formalPlayers.length >= 10 ? formalPlayers : allPlayers;
-            return [...basePool].sort((a, b) => {
+
+            // 关键修复：不再强行只搜索“三年窗口”。
+            // 原因：后端 /api/rookies 有时不会把 window_years、rookie_start_season 等字段完整返回给前端，
+            // 如果前端先过滤，班凯罗、杰伦·威廉姆斯这类球员会被误判为“不在数据集中”。
+            // 现在：全量搜索，但排序时优先三年窗口和 2022 届。
+            return [...allPlayers].sort((a, b) => {
+                const aFormal = isThreeYearFormalPlayer(a) ? 1 : 0;
+                const bFormal = isThreeYearFormalPlayer(b) ? 1 : 0;
+
                 const a2022 = isPreferred2022Class(a) ? 1 : 0;
                 const b2022 = isPreferred2022Class(b) ? 1 : 0;
-                const aw = Number(a.window_years || 0);
-                const bw = Number(b.window_years || 0);
-                return (b2022 - a2022) || (bw - aw);
+
+                const aw = Number(a.window_years || a.observed_years || a.years_observed || 0);
+                const bw = Number(b.window_years || b.observed_years || b.years_observed || 0);
+
+                return (bFormal - aFormal) || (b2022 - a2022) || (bw - aw);
             });
         }
 
@@ -931,15 +939,68 @@
                     const bFormal = isThreeYearFormalPlayer(b.player) ? 1 : 0;
                     const a2022 = isPreferred2022Class(a.player) ? 1 : 0;
                     const b2022 = isPreferred2022Class(b.player) ? 1 : 0;
-                    return (bFormal - aFormal) || (b2022 - a2022) || (b.score - a.score);
+                    return (b.score - a.score) || (bFormal - aFormal) || (b2022 - a2022);
                 })
                 .slice(0, limit)
                 .map(item => item.player);
         }
 
+        function canonicalFromAlias(rawName) {
+            const raw = String(rawName || "").trim();
+            if (!raw) return "";
+
+            const q = normalizeSearchText(raw);
+            for (const [cnAlias, enTarget] of Object.entries(PLAYER_CN_ALIAS_MAP)) {
+                const aliasKey = normalizeSearchText(cnAlias);
+                if (q === aliasKey || aliasKey.includes(q) || q.includes(aliasKey)) {
+                    return enTarget;
+                }
+            }
+            return raw;
+        }
+
+        function findPlayerObjectByName(rawName) {
+            if (!Array.isArray(allPlayers)) return null;
+
+            const canonical = canonicalFromAlias(rawName);
+            const q = normalizeSearchText(canonical);
+
+            let player = allPlayers.find(p => normalizeSearchText(getPlayerEnglishName(p)) === q);
+            if (player) return player;
+
+            player = allPlayers.find(p => normalizeSearchText(getPlayerDisplayName(p)) === q);
+            if (player) return player;
+
+            const candidates = allPlayers
+                .map(p => ({ p, score: scorePlayerByQuery(p, canonical) }))
+                .filter(x => x.score > 0)
+                .sort((a, b) => b.score - a.score);
+
+            return candidates.length ? candidates[0].p : null;
+        }
+
+        function getDisplayNameFromCanonical(name) {
+            const map = {
+                "Paolo Banchero": "班凯罗",
+                "Jalen Williams": "杰伦·威廉姆斯",
+                "Keegan Murray": "基根·穆雷",
+                "Jabari Smith Jr.": "贾巴里·史密斯",
+                "Walker Kessler": "凯斯勒",
+                "Jalen Duren": "杰伦·杜伦",
+                "Bennedict Mathurin": "马瑟林",
+                "Shaedon Sharpe": "谢登·夏普",
+                "Jaden Ivey": "杰登·艾维",
+                "Jeremy Sochan": "索汉",
+                "Dyson Daniels": "戴森·丹尼尔斯",
+                "Victor Wembanyama": "文班亚马",
+                "Chet Holmgren": "切特·霍姆格伦",
+                "Brandon Miller": "布兰登·米勒"
+            };
+            return map[name] || name;
+        }
+
         function findBestPlayerByName(name) {
-            const results = searchPlayers(name, 1);
-            return results.length ? results[0] : null;
+            return findPlayerObjectByName(name);
         }
 
         function hideAllScreens() {
@@ -1223,20 +1284,42 @@
         function renderCompareSearchResults(target, query) {
             const resultBox = document.getElementById(`compare-result-${target}`);
             if (!resultBox) return;
-            const results = searchPlayers(query);
-            if (!query.trim()) {
+
+            const q = String(query || "").trim();
+            const results = searchPlayers(q);
+            const canonical = canonicalFromAlias(q);
+            const hasDirectAlias = q && normalizeSearchText(canonical) !== normalizeSearchText(q);
+
+            if (!q) {
                 resultBox.classList.add("hidden");
                 resultBox.innerHTML = "";
                 return;
             }
+
+            // 本地 allPlayers 列表没搜到，但中文别名能解析时，仍然给一个候选项。
+            // 点击后直接把标准英文名发给后端，避免前端误判“没有该球员”。
             if (results.length === 0) {
                 resultBox.classList.remove("hidden");
-                resultBox.innerHTML = `
-                    <div class="compare-result-item">
-                        <div class="compare-result-main">没有找到相关球员</div>
-                        <div class="compare-result-sub">可以尝试输入英文名、中文名或简称</div>
-                    </div>
-                `;
+
+                if (hasDirectAlias || canonical) {
+                    resultBox.innerHTML = `
+                        <div class="compare-result-item" data-target="${target}" data-player="${canonical}">
+                            <div class="compare-result-main">${getDisplayNameFromCanonical(canonical)}</div>
+                            <div class="compare-result-sub">${canonical} · 直接交给后端匹配</div>
+                        </div>
+                    `;
+
+                    resultBox.querySelector(".compare-result-item[data-player]")?.addEventListener("click", e => {
+                        selectComparePlayer(target, e.currentTarget.dataset.player);
+                    });
+                } else {
+                    resultBox.innerHTML = `
+                        <div class="compare-result-item">
+                            <div class="compare-result-main">没有找到相关球员</div>
+                            <div class="compare-result-sub">可以尝试输入英文全名、中文名或简称</div>
+                        </div>
+                    `;
+                }
                 return;
             }
 
@@ -1265,27 +1348,39 @@
         }
 
         function selectComparePlayer(target, playerName) {
-            const player = allPlayers.find(p => getPlayerEnglishName(p) === playerName);
-            if (!player) return;
-            const cn = getPlayerDisplayName(player);
-            const en = getPlayerEnglishName(player);
-            const stage = getPlayerStage(player);
-            const suffix = `${stage ? " · " + stage : ""}${isPreferred2022Class(player) ? " · 2022届" : ""}${isThreeYearFormalPlayer(player) ? " · 三年窗口" : ""}`;
+            const canonical = canonicalFromAlias(playerName);
+            const player = findPlayerObjectByName(canonical);
+
+            const cn = player ? getPlayerDisplayName(player) : getDisplayNameFromCanonical(canonical);
+            const en = player ? getPlayerEnglishName(player) : canonical;
+            const stage = player ? getPlayerStage(player) : "后端查询";
+
+            const suffix = player
+                ? `${stage ? " · " + stage : ""}${isPreferred2022Class(player) ? " · 2022届" : ""}${isThreeYearFormalPlayer(player) ? " · 三年窗口" : ""}`
+                : ` · ${stage}`;
+
             if (target === "a") {
                 comparePlayerAName = en;
-                document.getElementById("compare-search-a").value = cn || en;
+                const input = document.getElementById("compare-search-a");
+                if (input) input.value = cn || en;
+
                 const selected = document.getElementById("compare-selected-a");
                 selected.classList.remove("hidden");
                 selected.textContent = `已选择：${cn || en}${suffix}`;
-                document.getElementById("compare-result-a").classList.add("hidden");
+
+                document.getElementById("compare-result-a")?.classList.add("hidden");
             }
+
             if (target === "b") {
                 comparePlayerBName = en;
-                document.getElementById("compare-search-b").value = cn || en;
+                const input = document.getElementById("compare-search-b");
+                if (input) input.value = cn || en;
+
                 const selected = document.getElementById("compare-selected-b");
                 selected.classList.remove("hidden");
                 selected.textContent = `已选择：${cn || en}${suffix}`;
-                document.getElementById("compare-result-b").classList.add("hidden");
+
+                document.getElementById("compare-result-b")?.classList.add("hidden");
             }
         }
 
@@ -1319,14 +1414,11 @@
         function initQuickCompareButtons() {
             document.querySelectorAll(".quick-compare-btn").forEach(btn => {
                 btn.addEventListener("click", () => {
-                    const playerA = findBestPlayerByName(btn.dataset.a);
-                    const playerB = findBestPlayerByName(btn.dataset.b);
-                    if (!playerA || !playerB) {
-                        showToast("推荐组合中有球员不在当前数据集中，请手动搜索其他球员", "warning");
-                        return;
-                    }
-                    selectComparePlayer("a", getPlayerEnglishName(playerA));
-                    selectComparePlayer("b", getPlayerEnglishName(playerB));
+                    // 推荐组合不再先在前端 allPlayers 里查。
+                    // 直接使用标准英文名，交给后端接口对比，避免前端字段不完整导致误判。
+                    selectComparePlayer("a", btn.dataset.a);
+                    selectComparePlayer("b", btn.dataset.b);
+                    showToast("已选择推荐组合，可以点击开始对比", "success");
                 });
             });
         }
@@ -1337,8 +1429,25 @@
             const compareBtn = document.getElementById("compare-btn");
             if (!compareBtn) return;
             compareBtn.addEventListener("click", async () => {
-                if (!comparePlayerAName || !comparePlayerBName) return showToast("请先搜索并选择两名球员", "warning");
-                if (comparePlayerAName === comparePlayerBName) return showToast("请选择两名不同的球员", "warning");
+                // 允许用户直接输入中文/英文后点击开始对比，不必须先点候选项。
+                if (!comparePlayerAName) {
+                    const rawA = document.getElementById("compare-search-a")?.value?.trim();
+                    if (rawA) selectComparePlayer("a", rawA);
+                }
+
+                if (!comparePlayerBName) {
+                    const rawB = document.getElementById("compare-search-b")?.value?.trim();
+                    if (rawB) selectComparePlayer("b", rawB);
+                }
+
+                if (!comparePlayerAName || !comparePlayerBName) {
+                    return showToast("请先输入或选择两名球员", "warning");
+                }
+
+                if (normalizeSearchText(comparePlayerAName) === normalizeSearchText(comparePlayerBName)) {
+                    return showToast("请选择两名不同的球员", "warning");
+                }
+
                 try {
                     const result = await apiPost("/api/players/compare", {
                         player_name_a: comparePlayerAName,
