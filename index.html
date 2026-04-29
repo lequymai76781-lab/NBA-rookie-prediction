@@ -325,9 +325,6 @@
                 </div>
 
                 <div class="flex items-center gap-3">
-                    <button id="open-favorites-btn" class="px-4 md:px-5 py-3 rounded-full bg-slate-900/80 border border-white/10 hover:bg-slate-800 transition btn-active font-bold">
-                        <i class="fa-solid fa-star text-yellow-400 mr-2"></i>收藏 <span id="favorite-count">0</span>
-                    </button>
                     <button id="open-guide-btn" class="px-4 md:px-5 py-3 rounded-full bg-slate-900/80 border border-white/10 hover:bg-slate-800 transition btn-active font-bold">
                         <i class="fa-solid fa-book mr-2 text-blue-300"></i>说明
                     </button>
@@ -369,7 +366,7 @@
                     <p class="text-slate-400 text-lg">先选择功能，再进入相应的分析页面</p>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <button class="module-card glass-card rounded-3xl p-8 text-left btn-active" data-module="predict">
                         <div class="w-14 h-14 rounded-2xl bg-emerald-500/15 text-emerald-300 flex items-center justify-center mb-5">
                             <i class="fa-solid fa-magnifying-glass-chart text-2xl"></i>
@@ -394,13 +391,6 @@
                         <p class="text-slate-400 leading-7">查看一级主结果的全局特征重要性，避免模型成为黑盒。</p>
                     </button>
 
-                    <button class="module-card glass-card rounded-3xl p-8 text-left btn-active" data-module="favorites">
-                        <div class="w-14 h-14 rounded-2xl bg-yellow-500/15 text-yellow-300 flex items-center justify-center mb-5">
-                            <i class="fa-solid fa-star text-2xl"></i>
-                        </div>
-                        <h3 class="text-2xl font-black mb-3">我的收藏</h3>
-                        <p class="text-slate-400 leading-7">收藏你关注的球员，随时回看他们的预测结果、能力画像与发展趋势。</p>
-                    </button>
                 </div>
 
                 <div class="text-center mt-12">
@@ -487,9 +477,6 @@
                                                 <div class="text-xs text-slate-400">潜力评分</div>
                                             </div>
                                         </div>
-                                        <button id="add-favorite-btn" class="mt-4 px-5 py-3 rounded-full bg-yellow-500/10 border border-yellow-400/20 text-yellow-300 hover:bg-yellow-500/20 transition font-bold">
-                                            <i class="fa-solid fa-star mr-2"></i>收藏
-                                        </button>
                                     </div>
                                 </div>
                             </div>
@@ -715,15 +702,6 @@
             </section>
         </main>
 
-        <div id="favorites-modal" class="modal-mask">
-            <div class="modal-panel glass-card-strong rounded-3xl p-7 max-w-3xl w-full max-h-[80vh] overflow-y-auto custom-scroll">
-                <div class="flex justify-between items-center mb-6">
-                    <h3 class="text-3xl font-black">我的收藏</h3>
-                    <button id="close-favorites-btn" class="w-10 h-10 rounded-full bg-slate-800 hover:bg-slate-700 transition"><i class="fa-solid fa-xmark"></i></button>
-                </div>
-                <div id="favorites-list" class="space-y-4 text-slate-300">暂无收藏球员。</div>
-            </div>
-        </div>
 
         <div id="guide-modal" class="modal-mask">
             <div class="modal-panel glass-card-strong rounded-3xl p-7 max-w-3xl w-full">
@@ -1410,7 +1388,6 @@
 
         let allPlayers = [];
         let currentPlayer = null;
-        let favorites = JSON.parse(localStorage.getItem("nba_rookie_favorites") || "[]");
         let comparePlayerAName = "";
         let comparePlayerBName = "";
         let compareRadarChart = null;
@@ -1687,10 +1664,6 @@
         }
 
         function openModule(moduleName) {
-            if (moduleName === "favorites") {
-                openFavorites();
-                return;
-            }
             hideAllScreens();
             const shell = document.getElementById("workspace-shell");
             shell.classList.remove("hidden");
@@ -2194,62 +2167,13 @@
             });
         }
 
-        function updateFavoriteCount() {
-            document.getElementById("favorite-count").textContent = favorites.length;
-        }
-
-        function addCurrentFavorite() {
-            if (!currentPlayer) return showToast("请先选择球员", "warning");
-            const en = currentPlayer.player_name;
-            if (!favorites.includes(en)) {
-                favorites.push(en);
-                localStorage.setItem("nba_rookie_favorites", JSON.stringify(favorites));
-                updateFavoriteCount();
-                showToast("已加入收藏", "success");
-            } else {
-                showToast("该球员已经在收藏中", "info");
-            }
-        }
-
-        function openFavorites() {
-            const modal = document.getElementById("favorites-modal");
-            const list = document.getElementById("favorites-list");
-            if (!favorites.length) {
-                list.innerHTML = "暂无收藏球员。";
-            } else {
-                list.innerHTML = favorites.map(name => `
-                    <div class="flex items-center justify-between bg-slate-950/50 border border-white/10 rounded-2xl p-4">
-                        <span class="font-bold">${name}</span>
-                        <button class="favorite-open-btn px-4 py-2 rounded-full bg-emerald-500/10 border border-emerald-400/20 text-emerald-300" data-name="${name}">查看</button>
-                    </div>
-                `).join("");
-                list.querySelectorAll(".favorite-open-btn").forEach(btn => {
-                    btn.addEventListener("click", async () => {
-                        modal.style.display = "none";
-                        openModule("predict");
-                        try {
-                            const player = await fetchPlayerPrediction(btn.dataset.name);
-                            renderPlayerDetail(player);
-                        } catch (error) {
-                            showToast(error.message || "加载失败", "error");
-                        }
-                    });
-                });
-            }
-            modal.style.display = "flex";
-        }
-
         function openGuide() {
             document.getElementById("guide-modal").style.display = "flex";
         }
 
         function initModals() {
-            document.getElementById("open-favorites-btn")?.addEventListener("click", openFavorites);
-            document.getElementById("close-favorites-btn")?.addEventListener("click", () => document.getElementById("favorites-modal").style.display = "none");
             document.getElementById("open-guide-btn")?.addEventListener("click", openGuide);
             document.getElementById("close-guide-btn")?.addEventListener("click", () => document.getElementById("guide-modal").style.display = "none");
-            document.getElementById("add-favorite-btn")?.addEventListener("click", addCurrentFavorite);
-            document.getElementById("favorites-modal")?.addEventListener("click", e => { if (e.target.id === "favorites-modal") e.currentTarget.style.display = "none"; });
             document.getElementById("guide-modal")?.addEventListener("click", e => { if (e.target.id === "guide-modal") e.currentTarget.style.display = "none"; });
         }
 
@@ -2383,7 +2307,6 @@
             initPredictModule();
             initPlayerComparison();
             initFeatureButtons();
-            updateFavoriteCount();
             showLandingScreen();
             await loadHealth();
             await loadPlayersData();
