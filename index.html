@@ -500,9 +500,6 @@
                                 <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-4 mb-5">
                                     <div>
                                         <h3 class="text-2xl font-black mb-2"><i class="fa-solid fa-layer-group mr-2 text-emerald-300"></i>现代篮球功能定位</h3>
-                                        <p class="text-slate-400 leading-7 text-sm">
-                                            这里展示的是球员的实际功能角色，不是简单的 PG / SG / SF / PF / C 登记位置。
-                                        </p>
                                     </div>
                                     <span id="modern-role-badge" class="modern-role-badge">功能定位</span>
                                 </div>
@@ -1085,12 +1082,37 @@
         function buildModernRoleAxes(player) {
             const f = getModernRoleFeatures(player);
             const pos = getPositionSignals(f.position);
-            const playmaking = clampScore(f.assists36 * 9 + f.astTo * 10 + Math.max(f.usagePct - 18, 0) * 0.9);
-            const scoring = clampScore(f.points36 * 3.1 + Math.max(f.usagePct - 18, 0) * 2 + Math.max(f.tsPct - 52, 0) * 1.8);
-            const shooting = clampScore(Math.max(f.threePct - 28, 0) * 4 + f.threePA36 * 6 + Math.max(f.tsPct - 54, 0));
-            const defense = clampScore(f.steals36 * 18 + f.blocks36 * 14 + Math.max(f.dws, 0) * 7 + Math.max(f.dbpm, 0) * 9);
-            const interior = clampScore(f.rebounds36 * 4.3 + f.blocks36 * 20 + (pos.isBig ? 16 : 0) + (f.heightIn >= 80 ? 12 : 0));
-            const wing = clampScore(f.steals36 * 15 + shooting * 0.32 + defense * 0.28 + (pos.isWing ? 15 : 0) + (f.heightIn >= 77 && f.heightIn < 82 ? 10 : 0));
+
+            // 后端有时不会把所有原始技术统计字段返回给前端，
+            // 所以这里不能让缺失字段直接变成 0，否则会出现“NBA球员持球组织=0”的不合理展示。
+            // 处理方式：先用真实字段计算；字段不足时，再用后端 radar_data 做兜底；最后设置一个很低的基础下限。
+            const radar = Array.isArray(player.radar_data) ? player.radar_data.map(v => clampScore(v)) : [];
+            const radarDefense = radar[0];
+            const radarScoring = radar[1];
+            const radarRebounding = radar[2];
+            const radarPlaymaking = radar[3];
+            const radarShooting = radar[4];
+
+            const rawPlaymaking = f.assists36 * 9 + f.astTo * 10 + Math.max(f.usagePct - 18, 0) * 0.9;
+            const rawScoring = f.points36 * 3.1 + Math.max(f.usagePct - 18, 0) * 2 + Math.max(f.tsPct - 52, 0) * 1.8;
+            const rawShooting = Math.max(f.threePct - 28, 0) * 4 + f.threePA36 * 6 + Math.max(f.tsPct - 54, 0);
+            const rawDefense = f.steals36 * 18 + f.blocks36 * 14 + Math.max(f.dws, 0) * 7 + Math.max(f.dbpm, 0) * 9;
+            const rawInterior = f.rebounds36 * 4.3 + f.blocks36 * 20 + (pos.isBig ? 16 : 0) + (f.heightIn >= 80 ? 12 : 0);
+            const rawWing = f.steals36 * 15 + rawShooting * 0.32 + rawDefense * 0.28 + (pos.isWing ? 15 : 0) + (f.heightIn >= 77 && f.heightIn < 82 ? 10 : 0);
+
+            function withFallback(rawValue, radarValue, floorValue) {
+                const raw = clampScore(rawValue);
+                const fallback = Number.isFinite(radarValue) ? clampScore(radarValue) : 0;
+                return clampScore(Math.max(raw, fallback, floorValue));
+            }
+
+            const playmaking = withFallback(rawPlaymaking, radarPlaymaking, 14);
+            const scoring = withFallback(rawScoring, radarScoring, 18);
+            const shooting = withFallback(rawShooting, radarShooting, 12);
+            const defense = withFallback(rawDefense, radarDefense, 14);
+            const interior = withFallback(rawInterior, radarRebounding ? radarRebounding * 0.72 : undefined, pos.isBig ? 22 : 12);
+            const wing = withFallback(rawWing, Math.max(radarDefense || 0, radarShooting || 0) * 0.65, pos.isWing ? 22 : 12);
+
             return {
                 playmaking: Math.round(playmaking),
                 scoring: Math.round(scoring),
@@ -1236,32 +1258,55 @@
             }).slice(0, 12);
         }
 
+        function toggleShapGlossary() {
+            const body = document.getElementById("shap-term-glossary-body");
+            const icon = document.getElementById("shap-term-toggle-icon");
+            const text = document.getElementById("shap-term-toggle-text");
+            if (!body) return;
+
+            const isHidden = body.classList.contains("hidden");
+            body.classList.toggle("hidden", !isHidden);
+            if (icon) icon.className = isHidden ? "fa-solid fa-chevron-up text-slate-300" : "fa-solid fa-chevron-down text-slate-300";
+            if (text) text.textContent = isHidden ? "收起专业术语解释" : "展开专业术语解释";
+        }
+
         function renderShapTermGlossary(player) {
             const wrap = document.getElementById("shap-term-glossary");
             if (!wrap) return;
             const terms = getGlossaryTermsForPlayer(player);
+
             wrap.innerHTML = `
-                <div class="mt-6 pt-5 border-t border-white/10">
-                    <div class="flex items-center justify-between gap-3 mb-4">
-                        <div>
-                            <h4 class="text-xl font-black"><i class="fa-solid fa-book-open mr-2 text-blue-300"></i>专业术语解释</h4>
-                            <p class="text-slate-400 text-sm leading-7 mt-1">根据当前球员数据字段和 SHAP 解释，自动展示评委最需要理解的指标。</p>
-                        </div>
-                        <span class="px-3 py-1 rounded-full bg-blue-500/10 border border-blue-400/20 text-blue-300 text-xs font-black">${terms.length} 项</span>
-                    </div>
-                    <div class="term-glossary-grid">
-                        ${terms.map(item => `
-                            <div class="term-glossary-card">
-                                <div class="term-glossary-key">${item.term}</div>
-                                <div class="term-glossary-cn">${item.cn}</div>
-                                <div class="term-glossary-desc">${item.desc}</div>
-                                <div class="term-glossary-effect">${item.effect}</div>
+                <div class="mt-5 pt-5 border-t border-white/10">
+                    <button onclick="toggleShapGlossary()"
+                            class="w-full flex items-center justify-between gap-3 px-5 py-4 rounded-2xl bg-slate-950/60 border border-white/10 hover:bg-slate-900/80 transition btn-active">
+                        <div class="text-left">
+                            <div class="text-lg font-black text-white">
+                                <i class="fa-solid fa-book-open mr-2 text-blue-300"></i><span id="shap-term-toggle-text">展开专业术语解释</span>
                             </div>
-                        `).join("")}
+                            <div class="text-slate-400 text-sm mt-1">点击查看 TS%、PER、USG%、每36分钟数据等指标说明</div>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <span class="px-3 py-1 rounded-full bg-blue-500/10 border border-blue-400/20 text-blue-300 text-xs font-black">${terms.length} 项</span>
+                            <i id="shap-term-toggle-icon" class="fa-solid fa-chevron-down text-slate-300"></i>
+                        </div>
+                    </button>
+
+                    <div id="shap-term-glossary-body" class="hidden mt-4">
+                        <div class="term-glossary-grid">
+                            ${terms.map(item => `
+                                <div class="term-glossary-card">
+                                    <div class="term-glossary-key">${item.term}</div>
+                                    <div class="term-glossary-cn">${item.cn}</div>
+                                    <div class="term-glossary-desc">${item.desc}</div>
+                                    <div class="term-glossary-effect">${item.effect}</div>
+                                </div>
+                            `).join("")}
+                        </div>
                     </div>
                 </div>
             `;
         }
+
 
 
         const PLAYER_CN_ALIAS_MAP = {
@@ -1853,8 +1898,6 @@
             const empty = document.getElementById("player-shap-empty");
             if (!img || !empty) return;
 
-            // 说明：SHAP 可以分为“全局解释”和“单球员局部解释”。
-            // 你的系统目前主要展示的是全局特征重要性；只有后端返回 primary_shap_plot 时，才展示单球员 SHAP 图。
             if (player.primary_shap_plot) {
                 img.src = `${API_BASE}${player.primary_shap_plot}`;
                 img.classList.remove("hidden");
@@ -1865,10 +1908,9 @@
                 empty.classList.remove("hidden");
                 empty.innerHTML = `
                     <div class="p-4 rounded-2xl bg-slate-950/50 border border-white/10">
-                        <div class="font-black text-white mb-2">当前展示的是全局 SHAP 解释逻辑</div>
+                        <div class="font-black text-white mb-2">全局 SHAP 解释</div>
                         <div class="text-slate-400 leading-7">
-                            本系统的 SHAP 解释主要用于说明模型整体依赖哪些特征，例如真实命中率、每36分钟得分、累计出场时间、三分命中率等。
-                            单个球员页面会结合预测结果、相似历史模板、现代功能定位和专业术语解释来辅助理解。
+                            SHAP 用于说明模型整体更依赖哪些特征；单个球员页面结合预测结果、相似模板和功能定位辅助理解。
                         </div>
                     </div>
                 `;
