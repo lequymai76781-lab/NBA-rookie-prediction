@@ -545,10 +545,9 @@
                             </div>
 
                             <div class="glass-card rounded-3xl p-6">
-                                <h3 class="text-2xl font-black mb-4">SHAP 模型解释与专业术语</h3>
+                                <h3 class="text-2xl font-black mb-4">SHAP 模型解释</h3>
                                 <img id="player-shap-img" class="hidden w-full rounded-2xl border border-white/10" alt="SHAP解释图">
                                 <div id="player-shap-empty" class="text-slate-400 leading-7"></div>
-                                <div id="shap-term-glossary" class="mt-5"></div>
                             </div>
                         </div>
                     </div>
@@ -708,6 +707,8 @@
                             <div id="top-feature-cards" class="grid grid-cols-1 md:grid-cols-2 gap-5">
                                 <div class="text-slate-400">正在加载...</div>
                             </div>
+
+                            <div id="insight-shap-term-glossary" class="mt-6"></div>
                         </div>
                     </div>
                 </div>
@@ -736,7 +737,7 @@
                     <p>二级画像基于每36分钟数据、效率、使用率、投射、防守贡献等规则生成，用于解释球员技术类型。</p>
                     <p>SHAP 用于解释模型特征贡献，避免预测结果成为黑盒。</p>
                     <p>新增的“现代篮球功能定位”不会只按传统位置或三分出手判断球员，而是综合持球、空间、防守、篮板、护框等维度识别角色。</p>
-                    <p>新增的“专业术语解释”会在 SHAP 单球员解释区域展示 TS%、PER、USG%、WS、BPM 等指标含义，方便评委理解模型依据。</p>
+                    <p>新增的“专业术语解释”会放在 SHAP洞察中心，配合全局特征重要性展示 TS%、PER、USG%、WS、BPM 等指标含义，方便评委理解模型依据。</p>
                 </div>
             </div>
         </div>
@@ -905,6 +906,18 @@
                 aliases: ["ast_to_ratio", "assist_turnover_ratio", "ast_tov", "ast_to_tov"],
                 desc: "表示球员每出现一次失误大约能送出多少次助攻，是组织稳定性指标。",
                 effect: "该指标高说明处理球更稳，有利于组织型球员判断。"
+            },
+            "AGE": {
+                cn: "平均年龄",
+                aliases: ["age_mean", "newbie_age", "age", "平均年龄"],
+                desc: "表示球员在新秀观察窗口内的年龄水平，会影响模型对成长空间和成熟度的判断。",
+                effect: "年龄较小且已有稳定产出时，通常意味着成长窗口更长；年龄偏大则可能代表即时成熟度更高。"
+            },
+            "MINUTES": {
+                cn: "累计出场时间",
+                aliases: ["minutes_sum", "minutes", "mp", "累计出场时间"],
+                desc: "表示球员在观察窗口内累计获得的比赛时间，是判断样本稳定性和球队使用程度的重要指标。",
+                effect: "出场时间越多，说明模型看到的样本越充分，也更能反映球队对该球员的真实信任。"
             }
         };
 
@@ -1258,10 +1271,34 @@
             }).slice(0, 12);
         }
 
+        function getGlossaryTermsFromFeatureImportance(features = []) {
+            const terms = new Map();
+
+            (features || []).forEach(item => {
+                const featureName = item && item.feature ? item.feature : item;
+                const matched = matchGlossaryTerm(featureName);
+                if (matched && !terms.has(matched.term)) terms.set(matched.term, matched);
+            });
+
+            const fallback = ["AGE", "OWS", "USG%", "WS", "TS%", "PER", "3P%", "PTS/36", "AST/36", "REB/36", "MINUTES", "BPM"];
+            fallback.forEach(term => {
+                if (terms.size < 12 && SHAP_TERM_GLOSSARY[term] && !terms.has(term)) {
+                    terms.set(term, { term, ...SHAP_TERM_GLOSSARY[term] });
+                }
+            });
+
+            const order = ["AGE", "OWS", "USG%", "WS", "TS%", "PER", "3P%", "PTS/36", "AST/36", "REB/36", "BLK/36", "MINUTES", "BPM", "VORP", "AST/TOV"];
+            return Array.from(terms.values()).sort((a, b) => {
+                const ia = order.indexOf(a.term);
+                const ib = order.indexOf(b.term);
+                return (ia === -1 ? 999 : ia) - (ib === -1 ? 999 : ib);
+            }).slice(0, 12);
+        }
+
         function toggleShapGlossary() {
-            const body = document.getElementById("shap-term-glossary-body");
-            const icon = document.getElementById("shap-term-toggle-icon");
-            const text = document.getElementById("shap-term-toggle-text");
+            const body = document.getElementById("insight-shap-term-glossary-body");
+            const icon = document.getElementById("insight-shap-term-toggle-icon");
+            const text = document.getElementById("insight-shap-term-toggle-text");
             if (!body) return;
 
             const isHidden = body.classList.contains("hidden");
@@ -1270,28 +1307,28 @@
             if (text) text.textContent = isHidden ? "收起专业术语解释" : "展开专业术语解释";
         }
 
-        function renderShapTermGlossary(player) {
-            const wrap = document.getElementById("shap-term-glossary");
+        function renderShapTermGlossary(features = []) {
+            const wrap = document.getElementById("insight-shap-term-glossary");
             if (!wrap) return;
-            const terms = getGlossaryTermsForPlayer(player);
+            const terms = getGlossaryTermsFromFeatureImportance(features);
 
             wrap.innerHTML = `
-                <div class="mt-5 pt-5 border-t border-white/10">
+                <div class="pt-6 border-t border-white/10">
                     <button onclick="toggleShapGlossary()"
                             class="w-full flex items-center justify-between gap-3 px-5 py-4 rounded-2xl bg-slate-950/60 border border-white/10 hover:bg-slate-900/80 transition btn-active">
                         <div class="text-left">
                             <div class="text-lg font-black text-white">
-                                <i class="fa-solid fa-book-open mr-2 text-blue-300"></i><span id="shap-term-toggle-text">展开专业术语解释</span>
+                                <i class="fa-solid fa-book-open mr-2 text-blue-300"></i><span id="insight-shap-term-toggle-text">展开专业术语解释</span>
                             </div>
-                            <div class="text-slate-400 text-sm mt-1">点击查看 TS%、PER、USG%、每36分钟数据等指标说明</div>
+                            <div class="text-slate-400 text-sm mt-1">配合上方 SHAP 特征重要性，查看关键指标含义</div>
                         </div>
                         <div class="flex items-center gap-3">
                             <span class="px-3 py-1 rounded-full bg-blue-500/10 border border-blue-400/20 text-blue-300 text-xs font-black">${terms.length} 项</span>
-                            <i id="shap-term-toggle-icon" class="fa-solid fa-chevron-down text-slate-300"></i>
+                            <i id="insight-shap-term-toggle-icon" class="fa-solid fa-chevron-down text-slate-300"></i>
                         </div>
                     </button>
 
-                    <div id="shap-term-glossary-body" class="hidden mt-4">
+                    <div id="insight-shap-term-glossary-body" class="hidden mt-4">
                         <div class="term-glossary-grid">
                             ${terms.map(item => `
                                 <div class="term-glossary-card">
@@ -1724,6 +1761,7 @@
                 if (!features.length) {
                     containers.forEach(c => c.innerHTML = `<div class="text-slate-400">暂无 SHAP 特征重要性数据</div>`);
                     if (topCards) topCards.innerHTML = `<div class="text-slate-400">暂无数据</div>`;
+                    renderShapTermGlossary([]);
                     return;
                 }
 
@@ -1761,10 +1799,13 @@
                         topCards.appendChild(card);
                     });
                 }
+
+                renderShapTermGlossary(features);
             } catch (error) {
                 console.error(error);
                 containers.forEach(c => c.innerHTML = `<div class="text-slate-400">未找到 SHAP 特征重要性文件</div>`);
                 if (topCards) topCards.innerHTML = `<div class="text-slate-400">未找到 SHAP 特征重要性文件</div>`;
+                renderShapTermGlossary([]);
             }
         }
 
@@ -1826,7 +1867,6 @@
             renderPlayerRadar(player);
             renderSimilarPlayers(player.similar_players || []);
             renderPlayerShap(player);
-            renderShapTermGlossary(player);
         }
 
         function buildRadarOptions() {
