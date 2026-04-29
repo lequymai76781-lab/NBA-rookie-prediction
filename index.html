@@ -206,6 +206,105 @@
         }
 
         select, input { color-scheme: dark; }
+
+        /* =========================
+           新增功能：现代功能定位 + SHAP术语解释
+           说明：只追加样式，不覆盖原有 Supabase 风格设计
+        ========================= */
+        .modern-role-card {
+            background:
+                linear-gradient(135deg, rgba(16, 185, 129, 0.10), rgba(59, 130, 246, 0.08)),
+                rgba(15, 23, 42, 0.78);
+            border: 1px solid rgba(16, 185, 129, 0.20);
+            border-radius: 24px;
+            padding: 22px;
+        }
+
+        .modern-role-axis {
+            background: rgba(2, 6, 23, 0.46);
+            border: 1px solid rgba(148, 163, 184, 0.14);
+            border-radius: 18px;
+            padding: 14px;
+        }
+
+        .modern-role-bar {
+            height: 9px;
+            border-radius: 999px;
+            background: rgba(148, 163, 184, 0.16);
+            overflow: hidden;
+        }
+
+        .modern-role-bar > span {
+            display: block;
+            height: 100%;
+            border-radius: 999px;
+            background: linear-gradient(90deg, #10b981, #34d399, #60a5fa);
+        }
+
+        .modern-role-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 10px;
+            border-radius: 999px;
+            background: rgba(16, 185, 129, 0.10);
+            border: 1px solid rgba(16, 185, 129, 0.22);
+            color: #6ee7b7;
+            font-size: 12px;
+            font-weight: 900;
+        }
+
+        .term-glossary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+            gap: 12px;
+        }
+
+        .term-glossary-card {
+            background: rgba(2, 6, 23, 0.45);
+            border: 1px solid rgba(148, 163, 184, 0.14);
+            border-radius: 18px;
+            padding: 14px;
+            transition: transform 0.22s ease, border-color 0.22s ease, background 0.22s ease;
+        }
+
+        .term-glossary-card:hover {
+            transform: translateY(-2px);
+            border-color: rgba(16, 185, 129, 0.34);
+            background: rgba(15, 23, 42, 0.66);
+        }
+
+        .term-glossary-key {
+            color: #6ee7b7;
+            font-weight: 950;
+            font-size: 15px;
+        }
+
+        .term-glossary-cn {
+            color: #f8fafc;
+            font-weight: 800;
+            margin-top: 4px;
+            font-size: 13px;
+        }
+
+        .term-glossary-desc {
+            color: #cbd5e1;
+            font-size: 13px;
+            line-height: 1.7;
+            margin-top: 8px;
+        }
+
+        .term-glossary-effect {
+            margin-top: 9px;
+            color: #bfdbfe;
+            background: rgba(59, 130, 246, 0.08);
+            border: 1px solid rgba(59, 130, 246, 0.14);
+            border-radius: 12px;
+            padding: 8px 10px;
+            font-size: 12px;
+            line-height: 1.65;
+        }
+
     </style>
 </head>
 
@@ -395,6 +494,35 @@
                                 </div>
                             </div>
 
+
+
+                            <div id="modern-role-card" class="glass-card rounded-3xl p-6 hidden">
+                                <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-4 mb-5">
+                                    <div>
+                                        <h3 class="text-2xl font-black mb-2"><i class="fa-solid fa-layer-group mr-2 text-emerald-300"></i>现代篮球功能定位</h3>
+                                        <p class="text-slate-400 leading-7 text-sm">
+                                            这里展示的是球员的实际功能角色，不是简单的 PG / SG / SF / PF / C 登记位置。
+                                        </p>
+                                    </div>
+                                    <span id="modern-role-badge" class="modern-role-badge">功能定位</span>
+                                </div>
+
+                                <div class="modern-role-card">
+                                    <div class="flex flex-wrap items-center gap-3 mb-3">
+                                        <div id="modern-role-title" class="text-2xl md:text-3xl font-black text-white">-</div>
+                                        <span id="traditional-position-badge" class="px-3 py-1 rounded-full bg-blue-500/10 border border-blue-400/20 text-blue-300 text-xs font-black">登记位置：未知</span>
+                                    </div>
+                                    <p id="modern-role-desc" class="text-slate-300 leading-8 mb-5"></p>
+                                    <div id="modern-role-axes" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 mb-5"></div>
+                                    <div id="modern-role-reasons" class="space-y-2 text-slate-300 leading-7 text-sm"></div>
+                                    <div class="mt-5 p-4 rounded-2xl bg-yellow-500/8 border border-yellow-400/20 text-yellow-100 leading-7 text-sm">
+                                        <i class="fa-solid fa-triangle-exclamation mr-2 text-yellow-300"></i>
+                                        判断原则：三分能力只代表空间属性，不直接等于后卫身份。现代篮球里，很多大前锋和中锋也能大量投三分，
+                                        所以系统会同时参考组织、使用率、篮板、盖帽、防守贡献、身高/登记位置等维度，避免把空间型内线误判成控卫或分卫。
+                                    </div>
+                                </div>
+                            </div>
+
                             <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
                                 <div class="metric-card"><div class="text-sm text-slate-400">年龄</div><div id="m-age" class="text-2xl font-black mt-2">-</div></div>
                                 <div class="metric-card"><div class="text-sm text-slate-400">每36分钟得分</div><div id="m-points" class="text-2xl font-black mt-2">-</div></div>
@@ -420,9 +548,10 @@
                             </div>
 
                             <div class="glass-card rounded-3xl p-6">
-                                <h3 class="text-2xl font-black mb-4">SHAP 单球员解释</h3>
+                                <h3 class="text-2xl font-black mb-4">SHAP 模型解释与专业术语</h3>
                                 <img id="player-shap-img" class="hidden w-full rounded-2xl border border-white/10" alt="SHAP解释图">
-                                <div id="player-shap-empty" class="text-slate-400">当前球员暂无 SHAP 图，或该球员不是三年正式预测窗口。</div>
+                                <div id="player-shap-empty" class="text-slate-400 leading-7"></div>
+                                <div id="shap-term-glossary" class="mt-5"></div>
                             </div>
                         </div>
                     </div>
@@ -609,6 +738,8 @@
                     <p>一级分类使用两阶段 XGBoost：先判断常规轨迹或特殊轨迹，再细分为超长巅峰型、大器晚成型、早衰型等类别。</p>
                     <p>二级画像基于每36分钟数据、效率、使用率、投射、防守贡献等规则生成，用于解释球员技术类型。</p>
                     <p>SHAP 用于解释模型特征贡献，避免预测结果成为黑盒。</p>
+                    <p>新增的“现代篮球功能定位”不会只按传统位置或三分出手判断球员，而是综合持球、空间、防守、篮板、护框等维度识别角色。</p>
+                    <p>新增的“专业术语解释”会在 SHAP 单球员解释区域展示 TS%、PER、USG%、WS、BPM 等指标含义，方便评委理解模型依据。</p>
                 </div>
             </div>
         </div>
@@ -685,6 +816,453 @@
         function featureNameCn(featureName) {
             return FEATURE_NAME_MAP[featureName] || featureName;
         }
+
+
+
+        /* =========================
+           新增：专业术语解释 + 现代篮球功能定位
+           只依赖当前 player 对象，不改变原有接口
+        ========================= */
+
+        const SHAP_TERM_GLOSSARY = {
+            "TS%": {
+                cn: "真实命中率",
+                aliases: ["true_shooting_pct", "ts_percent", "ts_pct", "ts", "真实命中率"],
+                desc: "综合两分、三分和罚球后的整体得分效率，比普通命中率更适合衡量真实进攻效率。",
+                effect: "TS% 高通常说明球员在消耗球权时更高效，有利于识别高效得分核心或长期稳定发展球员。"
+            },
+            "PER": {
+                cn: "球员效率值",
+                aliases: ["per", "per_mean", "player_efficiency_rating", "rep", "效率值"],
+                desc: "把得分、篮板、助攻、抢断、盖帽等产出整合成一个综合效率指标。",
+                effect: "PER 高通常代表单位时间综合产出强，但仍需要结合出场时间、使用率和效率一起判断。"
+            },
+            "USG%": {
+                cn: "使用率",
+                aliases: ["usage_pct", "usg_pct", "usage_rate", "usg", "使用率"],
+                desc: "表示球员在场时，球队进攻回合中有多大比例由他完成终结，包括出手、罚球和失误。",
+                effect: "USG% 高说明球员承担更多进攻任务；如果同时 TS% 也高，更接近核心型球员。"
+            },
+            "3P%": {
+                cn: "三分命中率",
+                aliases: ["three_point_pct", "fg3_pct", "3p_pct", "three_pct", "三分命中率"],
+                desc: "衡量外线投射命中比例，是判断空间能力的重要指标。",
+                effect: "3P% 只代表投射空间价值，不会单独决定球员是控卫、分卫还是内线。"
+            },
+            "PTS/36": {
+                cn: "每36分钟得分",
+                aliases: ["points_per36", "pts_per36", "early_avg_score", "得分_36min"],
+                desc: "把得分统一换算到每36分钟，减少不同出场时间带来的比较误差。",
+                effect: "该指标高代表得分产量强，但需要和 TS%、USG% 一起判断是高效核心还是单纯高产。"
+            },
+            "AST/36": {
+                cn: "每36分钟助攻",
+                aliases: ["assists_per36", "ast_per36", "助攻_36min"],
+                desc: "把助攻统一换算到每36分钟，用于比较不同上场时间下的组织产量。",
+                effect: "该指标高通常说明球员具备持球组织或连接进攻的能力。"
+            },
+            "REB/36": {
+                cn: "每36分钟篮板",
+                aliases: ["rebounds_per36", "reb_per36", "trb_per36", "篮板_36min"],
+                desc: "把篮板统一换算到每36分钟，衡量篮板产量和球权回收能力。",
+                effect: "该指标高通常增强模型对前场、内线、锋线稳定性的判断。"
+            },
+            "BLK/36": {
+                cn: "每36分钟盖帽",
+                aliases: ["blocks_per36", "blk_per36", "盖帽_36min"],
+                desc: "把盖帽统一换算到每36分钟，用于衡量护框和防守威慑。",
+                effect: "该指标高通常有利于识别护框型内线或防守型前场。"
+            },
+            "WS": {
+                cn: "胜利贡献值",
+                aliases: ["win_shares_cum", "win_shares", "ws", "ws_sum", "胜利贡献值"],
+                desc: "估算球员为球队胜利贡献了多少价值，通常可以拆分为进攻和防守胜利贡献。",
+                effect: "WS 高说明球员数据产出更可能转化为实际赢球价值。"
+            },
+            "OWS": {
+                cn: "进攻胜利贡献",
+                aliases: ["offensive_win_shares_cum", "offensive_win_shares", "ows"],
+                desc: "衡量球员在进攻端为球队胜利带来的贡献。",
+                effect: "OWS 高有利于识别高效得分点、进攻核心或优质轮换。"
+            },
+            "DWS": {
+                cn: "防守胜利贡献",
+                aliases: ["defensive_win_shares_cum", "defensive_win_shares", "dws"],
+                desc: "衡量球员在防守端为球队胜利带来的贡献。",
+                effect: "DWS 高有利于识别防守型侧翼、护框内线或长期轮换球员。"
+            },
+            "BPM": {
+                cn: "每百回合正负贡献",
+                aliases: ["bpm", "box_plus_minus", "box_pm"],
+                desc: "基于数据估算球员每100回合相对联盟平均水平的整体贡献。",
+                effect: "BPM 越高，通常说明球员整体影响力越强。"
+            },
+            "VORP": {
+                cn: "替代球员价值",
+                aliases: ["vorp", "value_over_replacement_player"],
+                desc: "估算球员相对普通替代球员额外创造的价值。",
+                effect: "VORP 高通常说明球员更具不可替代性。"
+            },
+            "AST/TOV": {
+                cn: "助攻失误比",
+                aliases: ["ast_to_ratio", "assist_turnover_ratio", "ast_tov", "ast_to_tov"],
+                desc: "表示球员每出现一次失误大约能送出多少次助攻，是组织稳定性指标。",
+                effect: "该指标高说明处理球更稳，有利于组织型球员判断。"
+            }
+        };
+
+        const MODERN_ROLE_FIELDS = {
+            position: ["position", "pos", "player_position", "official_position", "位置"],
+            height: ["height", "height_in", "height_inches", "player_height", "身高"],
+            points36: ["points_per36", "pts_per36", "early_avg_score", "得分_36min"],
+            assists36: ["assists_per36", "ast_per36", "助攻_36min"],
+            rebounds36: ["rebounds_per36", "reb_per36", "trb_per36", "篮板_36min"],
+            steals36: ["steals_per36", "stl_per36", "抢断_36min"],
+            blocks36: ["blocks_per36", "blk_per36", "盖帽_36min"],
+            threePct: ["three_point_pct", "fg3_pct", "3p_pct", "three_pct", "三分命中率"],
+            threePA36: ["three_point_attempts_per36", "fg3a_per36", "3pa_per36", "三分出手_36min"],
+            tsPct: ["ts_percent", "true_shooting_pct", "ts_pct", "真实命中率"],
+            usagePct: ["usage_pct", "usg_pct", "usage_rate", "使用率"],
+            astTo: ["ast_to_ratio", "assist_turnover_ratio", "ast_tov", "助攻失误比"],
+            per: ["per", "per_mean", "rep"],
+            dws: ["defensive_win_shares_cum", "defensive_win_shares", "dws"],
+            ws: ["win_shares_cum", "win_shares", "ws"],
+            dbpm: ["dbpm", "defensive_box_plus_minus"],
+            bpm: ["bpm", "box_plus_minus"],
+            vorp: ["vorp"]
+        };
+
+        function getAnyField(obj, aliases, fallback = null) {
+            if (!obj) return fallback;
+            for (const key of aliases) {
+                if (Object.prototype.hasOwnProperty.call(obj, key) && obj[key] !== null && obj[key] !== undefined && obj[key] !== "") {
+                    return obj[key];
+                }
+            }
+            const normalizedAliases = aliases.map(normalizeSearchText);
+            for (const key of Object.keys(obj)) {
+                if (normalizedAliases.includes(normalizeSearchText(key)) && obj[key] !== null && obj[key] !== undefined && obj[key] !== "") {
+                    return obj[key];
+                }
+            }
+            return fallback;
+        }
+
+        function toSafeNumber(value, fallback = 0) {
+            if (value === null || value === undefined || value === "") return fallback;
+            const n = Number(String(value).replace("%", "").replace(",", "").trim());
+            return Number.isFinite(n) ? n : fallback;
+        }
+
+        function normalizePercentValue(value) {
+            const n = toSafeNumber(value, 0);
+            if (Math.abs(n) <= 1.5) return n * 100;
+            return n;
+        }
+
+        function clampScore(value) {
+            return Math.max(0, Math.min(100, Number(value) || 0));
+        }
+
+        function parseHeightToInches(value) {
+            if (!value) return 0;
+            if (typeof value === "number") return value > 120 ? value / 2.54 : value;
+            const text = String(value).trim();
+            const feetMatch = text.match(/(\d+)\s*[-′']\s*(\d+)/);
+            if (feetMatch) return Number(feetMatch[1]) * 12 + Number(feetMatch[2]);
+            const cmMatch = text.match(/(\d+(?:\.\d+)?)\s*cm/i);
+            if (cmMatch) return Number(cmMatch[1]) / 2.54;
+            const numeric = Number(text.replace(/[^\d.]/g, ""));
+            if (!Number.isFinite(numeric) || numeric <= 0) return 0;
+            return numeric > 120 ? numeric / 2.54 : numeric;
+        }
+
+        function getPositionSignals(positionText) {
+            const pos = String(positionText || "").toUpperCase();
+            return {
+                isGuard: /PG|SG|\bG\b|后卫|控卫|分卫/.test(pos),
+                isWing: /SF|\bF\b|锋|侧翼|小前锋/.test(pos),
+                isBig: /PF|\bC\b|CENTER|中锋|大前锋|内线/.test(pos)
+            };
+        }
+
+        function getModernRoleInfo(player) {
+            if (player.modern_role || player.functional_role) {
+                return {
+                    role: player.modern_role || player.functional_role,
+                    tag: "后端画像",
+                    position: getAnyField(player, MODERN_ROLE_FIELDS.position, "未知"),
+                    desc: player.modern_role_desc || player.functional_role_desc || "后端已返回现代功能定位，本模块直接展示该定位，并补充关键维度评分。",
+                    reasons: ["该定位来自后端或模型输出。", "页面仍会展示持球、空间、防守、内线等维度，方便解释。"],
+                    axes: buildModernRoleAxes(player)
+                };
+            }
+
+            const axes = buildModernRoleAxes(player);
+            const position = getAnyField(player, MODERN_ROLE_FIELDS.position, "未知");
+            const f = getModernRoleFeatures(player);
+            const pos = getPositionSignals(position);
+            const frontcourtSignal = axes.interior * 0.68 + axes.wing * 0.32 + (pos.isBig ? 12 : 0);
+
+            let role = "综合轮换型";
+            let tag = "综合";
+            let desc = "该球员当前没有单一维度绝对突出，更接近综合轮换或待观察类型，需要结合更多赛季样本继续判断。";
+            let reasons = ["目前样本中没有某一类功能指标明显压倒其他指标。", "建议结合球队角色、出场时间和后续赛季变化继续观察。"];
+
+            if (frontcourtSignal >= 58 && axes.shooting >= 48) {
+                role = "空间型前场 / 空间型内线";
+                tag = "空间前场";
+                desc = "该球员同时具备前场/内线属性与外线空间能力，更接近现代篮球中的 Stretch Big 或空间型前场。";
+                reasons = ["三分能力较好，但篮板、盖帽、登记位置或身高信号显示其仍有明显前场属性。", "系统不会因为三分投得多就把他简单划为控卫或分卫。"];
+            } else if (axes.interior >= 66 && f.blocks36 >= 1.2) {
+                role = "护框篮板型内线";
+                tag = "护框内线";
+                desc = "该球员篮板、盖帽或防守信号较强，更接近护框型内线或防守型前场。";
+                reasons = ["篮板和盖帽产量较突出，说明其价值集中在禁区保护与球权回收。", "即使具备一定投射，也应优先识别其内线功能。"];
+            } else if (axes.playmaking >= 68 && frontcourtSignal >= 44) {
+                role = "组织前锋 / 全能锋线";
+                tag = "全能锋线";
+                desc = "该球员兼具处理球能力和前场属性，更接近组织前锋或全能锋线。";
+                reasons = ["助攻或处理球信号较强，但同时具备篮板、锋线或前场属性。", "这类球员不应简单归为控卫，而应理解为前场发起点。"];
+            } else if (axes.playmaking >= 72 && axes.scoring >= 55) {
+                role = "持球组织核心 / 双能后卫";
+                tag = "持球核心";
+                desc = "该球员具备较强持球参与、组织产量和一定得分能力，更接近持球核心或双能后卫。";
+                reasons = ["助攻、使用率或助攻失误比信号较强。", "如果同时具备高效率，说明不只是控球，还能稳定创造进攻价值。"];
+            } else if (axes.wing >= 60 && axes.shooting >= 42) {
+                role = "3D侧翼 / 空间防守型锋卫";
+                tag = "3D侧翼";
+                desc = "该球员具备外线空间能力与防守活跃度，更接近 3D 侧翼或空间防守型锋卫。";
+                reasons = ["三分、防守活跃度、抢断或防守贡献共同构成侧翼价值。", "这里不是只看三分，而是同时看防守和侧翼属性。"];
+            } else if (axes.scoring >= 70 && axes.playmaking < 62) {
+                role = "得分终结型侧翼 / 得分手";
+                tag = "得分手";
+                desc = "该球员得分产量或进攻使用率较高，但组织信号暂未达到核心持球级别。";
+                reasons = ["得分、使用率或真实命中率信号较突出。", "组织指标不够高时，不会仅凭得分或三分判断为控球核心。"];
+            } else if (axes.playmaking >= 58) {
+                role = "连接型组织者";
+                tag = "连接点";
+                desc = "该球员具备一定传导球和处理球能力，但暂时还不是高使用率持球核心。";
+                reasons = ["助攻或处理球信号存在。", "核心级别得分产量或使用率暂时不够突出。"];
+            } else if (axes.interior >= 54) {
+                role = "吃饼终结 / 篮板型前场";
+                tag = "前场轮换";
+                desc = "该球员更接近以内线终结、篮板保护或前场轮换为主要价值的类型。";
+                reasons = ["篮板、盖帽或前场属性强于组织属性。", "此类球员更适合作为内线终结点或防守轮换解释。"];
+            } else if (axes.shooting >= 55) {
+                role = "空间型射手 / 外线终结点";
+                tag = "空间点";
+                desc = "该球员外线空间能力较突出，但缺少足够组织、篮板或护框信号来判定为核心或内线。";
+                reasons = ["三分和投射信号较好。", "这只代表空间能力，不直接等同于后卫位置。"];
+            }
+
+            return { role, tag, desc, reasons, axes, position };
+        }
+
+        function getModernRoleFeatures(player) {
+            return {
+                position: getAnyField(player, MODERN_ROLE_FIELDS.position, "未知"),
+                heightIn: parseHeightToInches(getAnyField(player, MODERN_ROLE_FIELDS.height, 0)),
+                points36: toSafeNumber(getAnyField(player, MODERN_ROLE_FIELDS.points36, 0)),
+                assists36: toSafeNumber(getAnyField(player, MODERN_ROLE_FIELDS.assists36, 0)),
+                rebounds36: toSafeNumber(getAnyField(player, MODERN_ROLE_FIELDS.rebounds36, 0)),
+                steals36: toSafeNumber(getAnyField(player, MODERN_ROLE_FIELDS.steals36, 0)),
+                blocks36: toSafeNumber(getAnyField(player, MODERN_ROLE_FIELDS.blocks36, 0)),
+                threePct: normalizePercentValue(getAnyField(player, MODERN_ROLE_FIELDS.threePct, 0)),
+                threePA36: toSafeNumber(getAnyField(player, MODERN_ROLE_FIELDS.threePA36, 0)),
+                tsPct: normalizePercentValue(getAnyField(player, MODERN_ROLE_FIELDS.tsPct, 0)),
+                usagePct: normalizePercentValue(getAnyField(player, MODERN_ROLE_FIELDS.usagePct, 0)),
+                astTo: toSafeNumber(getAnyField(player, MODERN_ROLE_FIELDS.astTo, 0)),
+                per: toSafeNumber(getAnyField(player, MODERN_ROLE_FIELDS.per, 0)),
+                dws: toSafeNumber(getAnyField(player, MODERN_ROLE_FIELDS.dws, 0)),
+                ws: toSafeNumber(getAnyField(player, MODERN_ROLE_FIELDS.ws, 0)),
+                dbpm: toSafeNumber(getAnyField(player, MODERN_ROLE_FIELDS.dbpm, 0)),
+                bpm: toSafeNumber(getAnyField(player, MODERN_ROLE_FIELDS.bpm, 0)),
+                vorp: toSafeNumber(getAnyField(player, MODERN_ROLE_FIELDS.vorp, 0))
+            };
+        }
+
+        function buildModernRoleAxes(player) {
+            const f = getModernRoleFeatures(player);
+            const pos = getPositionSignals(f.position);
+            const playmaking = clampScore(f.assists36 * 9 + f.astTo * 10 + Math.max(f.usagePct - 18, 0) * 0.9);
+            const scoring = clampScore(f.points36 * 3.1 + Math.max(f.usagePct - 18, 0) * 2 + Math.max(f.tsPct - 52, 0) * 1.8);
+            const shooting = clampScore(Math.max(f.threePct - 28, 0) * 4 + f.threePA36 * 6 + Math.max(f.tsPct - 54, 0));
+            const defense = clampScore(f.steals36 * 18 + f.blocks36 * 14 + Math.max(f.dws, 0) * 7 + Math.max(f.dbpm, 0) * 9);
+            const interior = clampScore(f.rebounds36 * 4.3 + f.blocks36 * 20 + (pos.isBig ? 16 : 0) + (f.heightIn >= 80 ? 12 : 0));
+            const wing = clampScore(f.steals36 * 15 + shooting * 0.32 + defense * 0.28 + (pos.isWing ? 15 : 0) + (f.heightIn >= 77 && f.heightIn < 82 ? 10 : 0));
+            return {
+                playmaking: Math.round(playmaking),
+                scoring: Math.round(scoring),
+                shooting: Math.round(shooting),
+                defense: Math.round(defense),
+                interior: Math.round(interior),
+                wing: Math.round(wing)
+            };
+        }
+
+        function modernAxisLevel(value) {
+            if (value >= 75) return "强";
+            if (value >= 55) return "中";
+            if (value >= 35) return "弱";
+            return "低";
+        }
+
+        function renderModernAxis(name, value) {
+            const v = clampScore(value);
+            return `
+                <div class="modern-role-axis">
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-slate-400 text-sm">${name}</span>
+                        <span class="text-white font-black">${v}</span>
+                    </div>
+                    <div class="modern-role-bar"><span style="width:${v}%"></span></div>
+                    <div class="text-xs text-slate-500 mt-2">等级：${modernAxisLevel(v)}</div>
+                </div>
+            `;
+        }
+
+        function renderModernRole(player) {
+            const card = document.getElementById("modern-role-card");
+            if (!card) return;
+            const info = getModernRoleInfo(player);
+            card.classList.remove("hidden");
+            document.getElementById("modern-role-title").textContent = info.role;
+            document.getElementById("modern-role-badge").textContent = info.tag;
+            document.getElementById("traditional-position-badge").textContent = `登记位置：${info.position || "未知"}`;
+            document.getElementById("modern-role-desc").textContent = info.desc;
+            document.getElementById("modern-role-axes").innerHTML = [
+                renderModernAxis("持球组织", info.axes.playmaking),
+                renderModernAxis("得分产量", info.axes.scoring),
+                renderModernAxis("外线空间", info.axes.shooting),
+                renderModernAxis("防守活跃", info.axes.defense),
+                renderModernAxis("内线属性", info.axes.interior),
+                renderModernAxis("侧翼属性", info.axes.wing)
+            ].join("");
+            document.getElementById("modern-role-reasons").innerHTML = info.reasons
+                .map(reason => `<div><i class="fa-solid fa-check text-emerald-300 mr-2"></i>${reason}</div>`)
+                .join("");
+        }
+
+        function normalizeFeatureKey(value) {
+            return String(value || "").toLowerCase().replace(/[\s_\-（）()%/]/g, "").replace("percentage", "pct").replace("percent", "pct");
+        }
+
+        function safeJsonParse(value) {
+            if (!value) return null;
+            if (typeof value === "object") return value;
+            if (typeof value !== "string") return null;
+            try { return JSON.parse(value); } catch (_) { return null; }
+        }
+
+        function extractFeatureNamesFromAnyExplanation(value) {
+            const names = new Set();
+            const parsed = safeJsonParse(value);
+            if (!parsed) {
+                const text = String(value || "");
+                Object.entries(SHAP_TERM_GLOSSARY).forEach(([term, info]) => {
+                    [term, ...(info.aliases || [])].forEach(alias => {
+                        if (text.toLowerCase().includes(String(alias).toLowerCase())) names.add(alias);
+                    });
+                });
+                return Array.from(names);
+            }
+
+            const arrays = [parsed.top_features, parsed.feature_contributions, parsed.features, parsed.reason_factors, parsed.positive_features, parsed.negative_features];
+            arrays.forEach(arr => {
+                if (!Array.isArray(arr)) return;
+                arr.forEach(item => {
+                    if (typeof item === "string") names.add(item);
+                    if (item && typeof item === "object") {
+                        ["feature", "feature_name", "name", "column"].forEach(k => { if (item[k]) names.add(item[k]); });
+                    }
+                });
+            });
+
+            [parsed.shap_values, parsed.feature_values].forEach(obj => {
+                if (obj && typeof obj === "object" && !Array.isArray(obj)) Object.keys(obj).forEach(k => names.add(k));
+            });
+            return Array.from(names);
+        }
+
+        function matchGlossaryTerm(featureName) {
+            const key = normalizeFeatureKey(featureName);
+            if (!key) return null;
+            for (const [term, info] of Object.entries(SHAP_TERM_GLOSSARY)) {
+                const candidates = [term, ...(info.aliases || [])];
+                for (const alias of candidates) {
+                    const aliasKey = normalizeFeatureKey(alias);
+                    if (key === aliasKey || key.includes(aliasKey) || aliasKey.includes(key)) return { term, ...info };
+                }
+            }
+            return null;
+        }
+
+        function getGlossaryTermsForPlayer(player) {
+            const terms = new Map();
+            const explanations = [
+                player.primary_explanation,
+                player.secondary_explanation,
+                player.primary_stage1_explanation,
+                player.primary_special_explanation,
+                player.explanation,
+                player.shap_explanation
+            ];
+
+            explanations.forEach(exp => {
+                extractFeatureNamesFromAnyExplanation(exp).forEach(name => {
+                    const matched = matchGlossaryTerm(name);
+                    if (matched && !terms.has(matched.term)) terms.set(matched.term, matched);
+                });
+            });
+
+            Object.keys(player || {}).forEach(key => {
+                const matched = matchGlossaryTerm(key);
+                if (matched && !terms.has(matched.term)) terms.set(matched.term, matched);
+            });
+
+            const fallback = ["TS%", "PER", "USG%", "3P%", "PTS/36", "AST/36", "REB/36", "WS", "BPM", "VORP"];
+            fallback.forEach(term => {
+                if (terms.size < 10 && SHAP_TERM_GLOSSARY[term] && !terms.has(term)) {
+                    terms.set(term, { term, ...SHAP_TERM_GLOSSARY[term] });
+                }
+            });
+
+            const order = ["TS%", "PER", "USG%", "3P%", "PTS/36", "AST/36", "REB/36", "BLK/36", "WS", "OWS", "DWS", "BPM", "VORP", "AST/TOV"];
+            return Array.from(terms.values()).sort((a, b) => {
+                const ia = order.indexOf(a.term);
+                const ib = order.indexOf(b.term);
+                return (ia === -1 ? 999 : ia) - (ib === -1 ? 999 : ib);
+            }).slice(0, 12);
+        }
+
+        function renderShapTermGlossary(player) {
+            const wrap = document.getElementById("shap-term-glossary");
+            if (!wrap) return;
+            const terms = getGlossaryTermsForPlayer(player);
+            wrap.innerHTML = `
+                <div class="mt-6 pt-5 border-t border-white/10">
+                    <div class="flex items-center justify-between gap-3 mb-4">
+                        <div>
+                            <h4 class="text-xl font-black"><i class="fa-solid fa-book-open mr-2 text-blue-300"></i>专业术语解释</h4>
+                            <p class="text-slate-400 text-sm leading-7 mt-1">根据当前球员数据字段和 SHAP 解释，自动展示评委最需要理解的指标。</p>
+                        </div>
+                        <span class="px-3 py-1 rounded-full bg-blue-500/10 border border-blue-400/20 text-blue-300 text-xs font-black">${terms.length} 项</span>
+                    </div>
+                    <div class="term-glossary-grid">
+                        ${terms.map(item => `
+                            <div class="term-glossary-card">
+                                <div class="term-glossary-key">${item.term}</div>
+                                <div class="term-glossary-cn">${item.cn}</div>
+                                <div class="term-glossary-desc">${item.desc}</div>
+                                <div class="term-glossary-effect">${item.effect}</div>
+                            </div>
+                        `).join("")}
+                    </div>
+                </div>
+            `;
+        }
+
 
         const PLAYER_CN_ALIAS_MAP = {
             "班凯罗": "Paolo Banchero",
@@ -1199,9 +1777,11 @@
             document.getElementById("m-per").textContent = formatNumber(player.per || player.per_mean);
             document.getElementById("m-ts").textContent = `${formatNumber(player.ts_percent || player.true_shooting_pct)}%`;
             document.getElementById("player-report").textContent = player.report || "暂无综合报告。";
+            renderModernRole(player);
             renderPlayerRadar(player);
             renderSimilarPlayers(player.similar_players || []);
             renderPlayerShap(player);
+            renderShapTermGlossary(player);
         }
 
         function buildRadarOptions() {
@@ -1271,13 +1851,27 @@
         function renderPlayerShap(player) {
             const img = document.getElementById("player-shap-img");
             const empty = document.getElementById("player-shap-empty");
+            if (!img || !empty) return;
+
+            // 说明：SHAP 可以分为“全局解释”和“单球员局部解释”。
+            // 你的系统目前主要展示的是全局特征重要性；只有后端返回 primary_shap_plot 时，才展示单球员 SHAP 图。
             if (player.primary_shap_plot) {
                 img.src = `${API_BASE}${player.primary_shap_plot}`;
                 img.classList.remove("hidden");
                 empty.classList.add("hidden");
+                empty.innerHTML = "";
             } else {
                 img.classList.add("hidden");
                 empty.classList.remove("hidden");
+                empty.innerHTML = `
+                    <div class="p-4 rounded-2xl bg-slate-950/50 border border-white/10">
+                        <div class="font-black text-white mb-2">当前展示的是全局 SHAP 解释逻辑</div>
+                        <div class="text-slate-400 leading-7">
+                            本系统的 SHAP 解释主要用于说明模型整体依赖哪些特征，例如真实命中率、每36分钟得分、累计出场时间、三分命中率等。
+                            单个球员页面会结合预测结果、相似历史模板、现代功能定位和专业术语解释来辅助理解。
+                        </div>
+                    </div>
+                `;
             }
         }
 
@@ -1477,6 +2071,7 @@
                 <div>阶段：<span class="text-white font-bold">${player.analysis_stage || "未知阶段"}</span></div>
                 <div>一级结果：<span class="text-white font-bold">${getPrimaryLabel(player)}</span></div>
                 <div>二级画像：<span class="text-white font-bold">${player.pred_secondary_label || "暂无"}</span></div>
+                <div>现代功能定位：<span class="text-white font-bold">${getModernRoleInfo(player).role}</span></div>
                 <div>潜力评分：<span class="text-white font-bold">${player.potential_score ?? "-"}</span></div>
                 <div>每36分钟得分：<span class="text-white font-bold">${formatNumber(player.points_per36 || player.early_avg_score)}</span></div>
                 <div>PER：<span class="text-white font-bold">${formatNumber(player.per || player.per_mean)}</span></div>
